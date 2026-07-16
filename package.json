@@ -1,0 +1,28 @@
+{
+  "name": "stem-classroom-3d",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Реалістична 3D-візуалізація STEM-кабінету інформатики (робототехніка LEGO Mindstorms NXT / SPIKE Prime)",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "start": "serve dist -s -l 3000"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "serve": "^14.2.4",
+    "three": "^0.172.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/three": "^0.172.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.7.2",
+    "vite": "^6.0.7"
+  }
+}
