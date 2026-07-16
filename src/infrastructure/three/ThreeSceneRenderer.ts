@@ -23,6 +23,7 @@ export class ThreeSceneRenderer implements ISceneRenderer {
   private resizeObserver: ResizeObserver | null = null;
   private container: HTMLElement | null = null;
   private quality: QualityLevel = 'high';
+  private userTakeoverListener: (() => void) | null = null;
   private tween: {
     fromPos: THREE.Vector3;
     toPos: THREE.Vector3;
@@ -64,6 +65,29 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     controls.maxDistance = 18;
     controls.autoRotate = true;
     controls.autoRotateSpeed = 0.7;
+    // Керування мишею: ЛКМ — обертання, коліщатко — масштаб (до курсора), ПКМ — зсув
+    controls.enableRotate = true;
+    controls.enableZoom = true;
+    controls.enablePan = true;
+    controls.zoomToCursor = true;
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.PAN,
+    };
+    controls.touches = {
+      ONE: THREE.TOUCH.ROTATE,
+      TWO: THREE.TOUCH.DOLLY_PAN,
+    };
+    // Щойно користувач береться за керування — скасовуємо переліт камери
+    // та вимикаємо автообертання, щоб воно не «виривало» сцену з рук
+    controls.addEventListener('start', () => {
+      this.tween = null;
+      if (controls.autoRotate) {
+        controls.autoRotate = false;
+        this.userTakeoverListener?.();
+      }
+    });
     this.controls = controls;
 
     this.assembled = assembleClassroom(scene);
@@ -140,6 +164,10 @@ export class ThreeSceneRenderer implements ISceneRenderer {
 
   setAutoRotate(on: boolean): void {
     if (this.controls) this.controls.autoRotate = on;
+  }
+
+  setUserTakeoverListener(listener: (() => void) | null): void {
+    this.userTakeoverListener = listener;
   }
 
   setQuality(quality: QualityLevel): void {

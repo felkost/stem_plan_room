@@ -11,6 +11,11 @@ export interface ISceneRenderer {
   dispose(): void;
   applyPreset(preset: CameraPreset): void;
   setAutoRotate(on: boolean): void;
+  /**
+   * Слухач «перехоплення» керування: викликається, коли користувач починає
+   * обертати/масштабувати/зсувати сцену мишею чи дотиком (автообертання вимикається).
+   */
+  setUserTakeoverListener(listener: (() => void) | null): void;
   setQuality(quality: QualityLevel): void;
   /** Кадр сцени як PNG-Blob (рендер виконується примусово перед захопленням). */
   captureFrame(): Promise<Blob>;

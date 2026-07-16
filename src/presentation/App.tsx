@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MediaCaptureService } from '../application/MediaCaptureService';
 import type { ISceneRenderer } from '../application/ports';
 import type { ViewerService } from '../application/ViewerService';
@@ -27,6 +27,13 @@ export function App({ renderer, viewer, media }: Props) {
     toastKey.current += 1;
     setToast(message);
   }, []);
+
+  // Коли користувач береться за мишу/дотик, автообертання вимикається в рендерері —
+  // синхронізуємо стан кнопки «Обертання»
+  useEffect(() => {
+    viewer.onUserTakeover(() => setAutoRotateState(false));
+    return () => viewer.onUserTakeover(null);
+  }, [viewer]);
 
   const handlePreset = (id: string) => {
     setActivePreset(id);

@@ -21,6 +21,11 @@ export class ViewerService {
     this.renderer.setAutoRotate(on);
   }
 
+  /** Підписатися на момент, коли користувач бере керування мишею/дотиком. */
+  onUserTakeover(listener: (() => void) | null): void {
+    this.renderer.setUserTakeoverListener(listener);
+  }
+
   setQuality(quality: QualityLevel): void {
     this.renderer.setQuality(quality);
   }
