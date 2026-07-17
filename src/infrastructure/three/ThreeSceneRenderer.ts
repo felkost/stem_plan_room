@@ -32,17 +32,23 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     t: number;
   } | null = null;
 
+  /** initialQuality обирає composition root за профілем пристрою (мобільні — 'low'). */
+  constructor(initialQuality: QualityLevel = 'high') {
+    this.quality = initialQuality;
+  }
+
   mount(container: HTMLElement): void {
     if (this.renderer) return; // уже змонтовано
     this.container = container;
 
+    const high = this.quality === 'high';
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = high;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(high ? Math.min(window.devicePixelRatio, 2) : 1);
     renderer.setSize(container.clientWidth, container.clientHeight);
     container.appendChild(renderer.domElement);
     this.renderer = renderer;

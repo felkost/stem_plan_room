@@ -6,13 +6,16 @@
 import { createRoot } from 'react-dom/client';
 import { MediaCaptureService } from './application/MediaCaptureService';
 import { ViewerService } from './application/ViewerService';
+import { detectDeviceProfile, resolveInitialQuality } from './infrastructure/device/deviceProfile';
 import { saveBlobToDevice } from './infrastructure/media/download';
 import { MediaRecorderVideoService } from './infrastructure/media/MediaRecorderVideoService';
 import { ThreeSceneRenderer } from './infrastructure/three/ThreeSceneRenderer';
 import { App } from './presentation/App';
 import './presentation/styles.css';
 
-const renderer = new ThreeSceneRenderer();
+const deviceProfile = detectDeviceProfile();
+const initialQuality = resolveInitialQuality(deviceProfile);
+const renderer = new ThreeSceneRenderer(initialQuality);
 const viewer = new ViewerService(renderer);
 const media = new MediaCaptureService(renderer, new MediaRecorderVideoService(), saveBlobToDevice);
 
@@ -22,5 +25,11 @@ if (import.meta.env.DEV) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <App renderer={renderer} viewer={viewer} media={media} />,
+  <App
+    renderer={renderer}
+    viewer={viewer}
+    media={media}
+    initialQuality={initialQuality}
+    isTouch={deviceProfile.coarsePointer}
+  />,
 );

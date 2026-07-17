@@ -13,12 +13,16 @@ interface Props {
   renderer: ISceneRenderer;
   viewer: ViewerService;
   media: MediaCaptureService;
+  /** Стартова якість, визначена за профілем пристрою в composition root. */
+  initialQuality: QualityLevel;
+  /** Основний ввід — дотик: інша довідка та підказки. */
+  isTouch: boolean;
 }
 
-export function App({ renderer, viewer, media }: Props) {
+export function App({ renderer, viewer, media, initialQuality, isTouch }: Props) {
   const [activePreset, setActivePreset] = useState('overview');
   const [autoRotate, setAutoRotateState] = useState(true);
-  const [quality, setQualityState] = useState<QualityLevel>('high');
+  const [quality, setQualityState] = useState<QualityLevel>(initialQuality);
   const [helpOpen, setHelpOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastKey = useRef(0);
@@ -60,7 +64,7 @@ export function App({ renderer, viewer, media }: Props) {
           LEGO Mindstorms NXT та SPIKE Prime.
         </p>
       </div>
-      <HelpOverlay open={helpOpen} onToggle={() => setHelpOpen((v) => !v)} />
+      <HelpOverlay open={helpOpen} onToggle={() => setHelpOpen((v) => !v)} isTouch={isTouch} />
       <Toolbar
         viewer={viewer}
         activePreset={activePreset}

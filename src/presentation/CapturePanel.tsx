@@ -12,7 +12,7 @@ function formatTime(totalSeconds: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-/** Кнопки захоплення: скріншот (PNG) і відеозапис (WebM) із завантаженням на пристрій. */
+/** Кнопки захоплення: скріншот (PNG) і відеозапис (WebM/MP4) зі збереженням на пристрій. */
 export function CapturePanel({ media, onToast }: Props) {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -28,8 +28,8 @@ export function CapturePanel({ media, onToast }: Props) {
   const takeScreenshot = async () => {
     setBusy(true);
     try {
-      await media.takeScreenshot();
-      onToast('Скріншот збережено — перевірте папку «Завантаження»');
+      const saved = await media.takeScreenshot();
+      onToast(saved ? 'Скріншот збережено на пристрій' : 'Збереження скасовано');
     } catch (e) {
       onToast(`Помилка скріншота: ${e instanceof Error ? e.message : e}`);
     } finally {
@@ -55,8 +55,8 @@ export function CapturePanel({ media, onToast }: Props) {
       }
       setRecording(false);
       try {
-        await media.stopRecording();
-        onToast('Відео збережено — перевірте папку «Завантаження»');
+        const saved = await media.stopRecording();
+        onToast(saved ? 'Відео збережено на пристрій' : 'Збереження скасовано');
       } catch (e) {
         onToast(`Помилка збереження відео: ${e instanceof Error ? e.message : e}`);
       }
@@ -72,7 +72,7 @@ export function CapturePanel({ media, onToast }: Props) {
         <button
           className={`btn${recording ? ' recording' : ''}`}
           onClick={toggleRecording}
-          title="Записати відео сцени у WebM"
+          title="Записати відео сцени (WebM або MP4 — залежно від браузера)"
         >
           {recording ? `⏹ Зупинити (${formatTime(seconds)})` : '⏺ Запис відео'}
         </button>

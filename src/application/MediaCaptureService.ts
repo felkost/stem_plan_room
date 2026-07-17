@@ -21,9 +21,10 @@ export class MediaCaptureService {
     return this.recorder.isSupported;
   }
 
-  async takeScreenshot(): Promise<void> {
+  /** @returns true — файл збережено; false — користувач скасував збереження. */
+  async takeScreenshot(): Promise<boolean> {
     const blob = await this.renderer.captureFrame();
-    this.saveFile(blob, `stem-kabinet_${timestamp()}.png`);
+    return this.saveFile(blob, `stem-kabinet_${timestamp()}.png`);
   }
 
   startRecording(): void {
@@ -31,8 +32,9 @@ export class MediaCaptureService {
     this.recorder.start(stream);
   }
 
-  async stopRecording(): Promise<void> {
+  /** @returns true — файл збережено; false — користувач скасував збереження. */
+  async stopRecording(): Promise<boolean> {
     const blob = await this.recorder.stop();
-    this.saveFile(blob, `stem-kabinet_${timestamp()}.${this.recorder.fileExtension}`);
+    return this.saveFile(blob, `stem-kabinet_${timestamp()}.${this.recorder.fileExtension}`);
   }
 }
