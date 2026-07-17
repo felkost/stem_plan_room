@@ -18,6 +18,11 @@
 
 ## Журнал етапів
 
+- **2026-07-17 — Handoff-механізм + скіл engineering-insights**
+  Кореневий CLAUDE.md + memory.md + шарові CLAUDE.md (`1e97ced`); скіл
+  `engineering-insights` скопійовано з dev-digest і адаптовано під
+  Onion-шари (`.claude/skills/engineering-insights/`), засіяно
+  `src/<шар>/insights.md` (infrastructure: 2 записи, presentation: 1).
 - **2026-07-17 — Мобільна адаптація (iPhone 13+/Android)** `53ab37e`
   Новий модуль `src/infrastructure/device/` (профіль пристрою → стартова
   якість 'low' на мобільних); MP4-фолбек запису для iOS Safari
@@ -56,7 +61,11 @@
 - `src/presentation/` — App, Toolbar, CapturePanel, HelpOverlay (isTouch),
   SceneCanvas, styles.css (safe-area/dvh/coarse-pointer медіазапити).
 
-## Прийоми та граблі (перевірено в сесіях)
+## Прийоми та граблі (крос-шарові; технічні відкриття шарів — в insights.md)
+
+> Датовані технічні відкриття тепер веде скіл `engineering-insights`
+> у `src/<шар>/insights.md` (див. CLAUDE.md). Тут — лише процесні речі,
+> що не належать жодному шару.
 
 - **Додавання нового об'єкта плану** (чекліст):
   1) const у `classroomLayout.ts` → 2) білдер у `builders/furniture.ts` →
@@ -64,20 +73,10 @@
   `layoutValidation.test.ts` (FLOOR_FURNITURE / ALL_CHAIRS + кількість) →
   5) блок у `layoutBaseline.test.ts` → 6) `npx vitest run` (новий снапшот
   запишеться сам; `-u` потрібен лише для ЗМІНИ наявних координат).
-- **Скріншот сцени, коли панель браузера прихована** (`document.hidden` —
-  rAF/RO заморожені, штатний screenshot падає по таймауту):
-  у консолі сторінки `import('/src/infrastructure/three/ThreeSceneRenderer.ts')`
-  (Vite віддає TS-модулі), `new ThreeSceneRenderer(); mount(div 1280×800)`,
-  `captureFrame()` робить синхронний рендер → base64 → POST на крихітний
-  node-сервер у scratchpad, який пише PNG. Після — `dispose()` і прибрати div.
-- **Об'єкти, крізь які має проходити світло** (скло, ламелі жалюзі):
-  `mesh.userData.noShadowCast = true` — room.ts вимикає castShadow у traverse.
-- **Матеріали white/laminate/steel** створюються один раз на модуль
-  furniture.ts — нові білдери використовують наявні, не плодять копій.
-- **Крісла впритул до столів:** SAT-перевірка в тестах має shrink-допуски
-  (стільниці 4 см, крісла 1 см) — зазор 0.5–1 см між габаритами допустимий.
 - **PowerShell 5.1:** немає `&&`/`??`/`?.`; `gh` відсутній — PR через
   GitHub MCP; pre-push хук жене `npm run verify`.
+- Правила білдерів/матеріалів/тіней — `src/infrastructure/three/CLAUDE.md`;
+  shrink-допуски SAT і політика еталона — `src/domain/CLAUDE.md`.
 
 ---
 Останнє оновлення: 2026-07-17
