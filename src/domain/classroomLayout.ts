@@ -61,11 +61,11 @@ export const MONITORS: PlacedItem[] = [
   { x: 494.70007, y: 155.44995, elevation: 78, angle: 1.6009792, ...MONITOR_SIZE },
   { x: 498.70007, y: 265.44995, elevation: 78, angle: 1.6009792, ...MONITOR_SIZE },
   { x: 500.70004, y: 375.44995, elevation: 78, angle: 1.6009792, ...MONITOR_SIZE },
-  // Південний ряд (екран на північ)
-  { x: 98.70001, y: 481.44995, elevation: 78, angle: 0.015414476, ...MONITOR_SIZE },
-  { x: 208.70001, y: 481.44995, elevation: 78, angle: 0.015414476, ...MONITOR_SIZE },
-  { x: 312.7, y: 487.44995, elevation: 78, angle: 0.008710146, ...MONITOR_SIZE },
-  { x: 412.7, y: 489.44995, elevation: 78, angle: 0.015414476, ...MONITOR_SIZE },
+  // Південний ряд — розвернуто на 180° відносно плану: екрани до класу (на північ)
+  { x: 98.70001, y: 481.44995, elevation: 78, angle: 0.015414476 + Math.PI, ...MONITOR_SIZE },
+  { x: 208.70001, y: 481.44995, elevation: 78, angle: 0.015414476 + Math.PI, ...MONITOR_SIZE },
+  { x: 312.7, y: 487.44995, elevation: 78, angle: 0.008710146 + Math.PI, ...MONITOR_SIZE },
+  { x: 412.7, y: 489.44995, elevation: 78, angle: 0.015414476 + Math.PI, ...MONITOR_SIZE },
 ];
 
 /** Офісні крісла учнів, 13 шт (з Home.xml: chair2, 34×34.8×90.2) — явні позиції з плану. */
