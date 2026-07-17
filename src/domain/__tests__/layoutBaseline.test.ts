@@ -42,6 +42,15 @@ describe('базове розташування об’єктів (еталон 
     }).toMatchSnapshot();
   });
 
+  it('настінні об’єкти редизайну (кондиціонер, стенд, декор, годинник)', () => {
+    expect({
+      airConditioner: layout.AIR_CONDITIONER,
+      pinBoard: layout.PIN_BOARD,
+      wallDecor: layout.WALL_DECOR,
+      wallClock: layout.WALL_CLOCK,
+    }).toMatchSnapshot();
+  });
+
   it('техніка, тренувальний стіл, отвори, світло, камери', () => {
     expect({
       trainingTable: layout.TRAINING_TABLE,

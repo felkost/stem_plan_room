@@ -5,9 +5,26 @@
  * рендерер ховає стіну, з боку якої стоїть камера.
  */
 import * as THREE from 'three';
-import { ALCOVE_WINDOWS, CEILING_LIGHTS, EAST_WINDOWS, ROOM, WEST_DOOR } from '../../../domain/classroomLayout';
-import { box, cm, standardMat } from './common';
-import { makeClockTexture, makeFloorTexture, makePosterTexture, makeWoodTexture } from './textures';
+import {
+  AIR_CONDITIONER,
+  ALCOVE_WINDOWS,
+  CEILING_LIGHTS,
+  EAST_WINDOWS,
+  PIN_BOARD,
+  ROOM,
+  WALL_CLOCK,
+  WALL_DECOR,
+  WEST_DOOR,
+} from '../../../domain/classroomLayout';
+import { box, cm, placeItem, standardMat } from './common';
+import {
+  makeClockTexture,
+  makeFloorTexture,
+  makePinBoardTexture,
+  makePosterTexture,
+  makeWoodTexture,
+  makeWordCloudTexture,
+} from './textures';
 
 export interface WallSet {
   group: THREE.Group;
@@ -47,6 +64,14 @@ const radiatorMat = standardMat(0xe9e9e6, 0.55, 0.15);
 const baseboardMat = standardMat(0x93938f, 0.7);
 const doorMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#8a5a2e'), roughness: 0.65 });
 const handleMat = standardMat(0xc9c9c9, 0.3, 0.9);
+const acBodyMat = standardMat(0xf8f8f6, 0.35, 0.05);
+const acSlotMat = standardMat(0x9aa0a3, 0.6);
+const acLedMat = new THREE.MeshStandardMaterial({
+  color: 0x123c3c,
+  emissive: 0x27c8b8,
+  emissiveIntensity: 1.1,
+});
+const standFrameMat = standardMat(0xd8d8d5, 0.4, 0.6);
 
 /**
  * Стіна вздовж локальної осі X довжиною length із отворами.
@@ -178,17 +203,96 @@ function poster(kind: number): THREE.Mesh {
   return mesh;
 }
 
+/** Настінний годинник; низ на y=0, фронт у +z (під placeItem). */
 function clock(): THREE.Group {
   const g = new THREE.Group();
-  const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.045, 28), standardMat(0x2b3440, 0.4));
+  const r = 0.17;
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.045, 28), standardMat(0x2b3440, 0.4));
   rim.rotation.x = Math.PI / 2;
+  rim.position.y = r;
   g.add(rim);
   const face = new THREE.Mesh(
     new THREE.CircleGeometry(0.15, 28),
     new THREE.MeshStandardMaterial({ map: makeClockTexture(), roughness: 0.6 }),
   );
-  face.position.z = 0.024;
+  face.position.set(0, r, 0.024);
   g.add(face);
+  return g;
+}
+
+/** Компактний настінний кондиціонер; низ на y=0, фронт у +z. */
+function airConditioner(): THREE.Group {
+  const g = new THREE.Group();
+  const w = cm(AIR_CONDITIONER.width);
+  const h = cm(AIR_CONDITIONER.height);
+  const d = cm(AIR_CONDITIONER.depth);
+  g.add(box(w, h, d, acBodyMat, 0, h / 2, 0));
+  // верхня щілина забору повітря
+  g.add(box(w * 0.86, 0.014, 0.004, acSlotMat, 0, h * 0.82, d / 2 + 0.002));
+  // нижня привідкрита ламель повітроводу
+  const flap = box(w * 0.9, 0.05, 0.014, radiatorMat, 0, 0.045, d / 2 + 0.012);
+  flap.rotation.x = 0.55;
+  g.add(flap);
+  // світлодіодний індикатор режиму
+  g.add(box(0.05, 0.016, 0.004, acLedMat, w * 0.32, h * 0.3, d / 2 + 0.002));
+  return g;
+}
+
+/**
+ * Стенд для матеріалів: біла дошка в алюмінієвій рамі з поличкою-лотком,
+ * текстурні картки праворуч і три пришпилені міні-постери. Низ на y=0.
+ */
+function pinBoardStand(): THREE.Group {
+  const g = new THREE.Group();
+  const w = cm(PIN_BOARD.width);
+  const h = cm(PIN_BOARD.height);
+  // полотно
+  g.add(box(w, h, 0.03, standardMat(0xfbfbf9, 0.85), 0, h / 2, 0));
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(w - 0.03, h - 0.03),
+    new THREE.MeshStandardMaterial({ map: makePinBoardTexture(), roughness: 0.85 }),
+  );
+  face.position.set(0, h / 2, 0.016);
+  g.add(face);
+  // алюмінієва рама та лоток для маркерів
+  g.add(box(w + 0.06, 0.03, 0.05, standFrameMat, 0, h - 0.015, 0));
+  g.add(box(w + 0.06, 0.03, 0.05, standFrameMat, 0, 0.015, 0));
+  g.add(box(0.03, h, 0.05, standFrameMat, -(w / 2 + 0.015), h / 2, 0));
+  g.add(box(0.03, h, 0.05, standFrameMat, w / 2 + 0.015, h / 2, 0));
+  g.add(box(0.6, 0.02, 0.07, standFrameMat, 0, 0.03, 0.045));
+  g.add(box(0.6, 0.03, 0.012, standFrameMat, 0, 0.045, 0.078));
+  // пришпилені міні-постери (ліві 2/3 полотна) з кнопками
+  const posterSpots = [
+    { x: -0.52, tilt: 0.015, kind: 0 },
+    { x: -0.21, tilt: -0.02, kind: 1 },
+    { x: 0.1, tilt: 0.01, kind: 3 },
+  ];
+  const pinMat = standardMat(0xd94f4f, 0.45);
+  for (const spot of posterSpots) {
+    const p = poster(spot.kind);
+    p.scale.setScalar(0.5);
+    p.rotation.z = spot.tilt;
+    p.position.set(spot.x, 0.43, 0.022);
+    g.add(p);
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.011, 10, 8), pinMat);
+    pin.position.set(spot.x, 0.43 + 0.19, 0.026);
+    g.add(pin);
+  }
+  return g;
+}
+
+/** Типографічний декор стіни (прозорий декаль-план); низ на y=0. */
+function wordCloudDecal(): THREE.Group {
+  const g = new THREE.Group();
+  const w = cm(WALL_DECOR.width);
+  const h = cm(WALL_DECOR.height);
+  const decal = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshStandardMaterial({ map: makeWordCloudTexture(), transparent: true, roughness: 0.95 }),
+  );
+  decal.position.y = h / 2;
+  decal.userData.noShadowCast = true;
+  g.add(decal);
   return g;
 }
 
@@ -293,9 +397,6 @@ export function buildRoom(): RoomBuild {
   const northWall = wallWithOpenings(aMaxX - minX + 2 * t, height, t, frontWallMat, []);
   northWall.position.set((minX + aMaxX) / 2, 0, minZ - t / 2);
   north.add(northWall);
-  const wallClock = clock();
-  wallClock.position.set(5.1, 2.12, minZ + 0.03); // між дошкою та нішею, фронт → +z
-  north.add(wallClock);
   group.add(north);
 
   // Східна стіна основної зони (2 вікна): інтер'єр -x ⇒ rotation.y=-90°,
@@ -318,6 +419,10 @@ export function buildRoom(): RoomBuild {
   posterE.rotation.y = -Math.PI / 2;
   posterE.position.set(maxX - 0.01, 1.55, 2.6);
   eastMain.add(posterE);
+  // кондиціонер на простінку між вікнами, над постером
+  const ac = airConditioner();
+  placeItem(ac, AIR_CONDITIONER);
+  eastMain.add(ac);
   // постер біля фронту класу (до першого вікна)
   const posterEF = poster(3);
   posterEF.rotation.y = -Math.PI / 2;
@@ -352,14 +457,17 @@ export function buildRoom(): RoomBuild {
   southWall.rotation.y = Math.PI;
   southWall.position.set((minX + maxX) / 2, 0, maxZ + t / 2);
   south.add(southWall);
-  const posterS1 = poster(1);
-  posterS1.rotation.y = Math.PI;
-  posterS1.position.set(2.0, 1.6, maxZ - 0.01);
-  south.add(posterS1);
-  const posterS2 = poster(3);
-  posterS2.rotation.y = Math.PI;
-  posterS2.position.set(2.8, 1.6, maxZ - 0.01);
-  south.add(posterS2);
+  // композиція за золотим перерізом (координати — у domain/classroomLayout.ts):
+  // стенд у мінорній зоні, ворд-клауд у мажорній, годинник на золотій лінії
+  const stand = pinBoardStand();
+  placeItem(stand, PIN_BOARD);
+  south.add(stand);
+  const decor = wordCloudDecal();
+  placeItem(decor, WALL_DECOR);
+  south.add(decor);
+  const wallClock = clock();
+  placeItem(wallClock, WALL_CLOCK);
+  south.add(wallClock);
   group.add(south);
 
   // Південна стіна ніші (між нішею та зовнішнім кутом): інтер'єр -z
