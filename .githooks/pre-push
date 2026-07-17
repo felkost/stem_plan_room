@@ -1,0 +1,13 @@
+#!/bin/sh
+# Локальні перевірки перед push: типи + тести розстановки.
+# Хук підключається автоматично через npm-скрипт "prepare"
+# (git config core.hooksPath .githooks).
+echo "pre-push: npm run verify (typecheck + vitest)…"
+npm run verify
+status=$?
+if [ $status -ne 0 ]; then
+  echo ""
+  echo "Перевірки не пройшли — push скасовано."
+  echo "Якщо змінювали планування свідомо, оновіть еталон: npx vitest run -u"
+  exit $status
+fi

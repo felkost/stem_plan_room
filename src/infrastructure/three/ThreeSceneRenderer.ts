@@ -141,13 +141,10 @@ export class ThreeSceneRenderer implements ISceneRenderer {
   /** Dollhouse: ховаємо стіну/стелю, з боку якої стоїть камера. */
   private updateWallVisibility(): void {
     if (!this.camera || !this.assembled) return;
-    const { walls, ceiling, bounds } = this.assembled.room;
+    const { wallSets, ceiling, bounds } = this.assembled.room;
     const p = this.camera.position;
     const margin = 0.15;
-    walls.west.visible = p.x > bounds.minX - margin;
-    walls.east.visible = p.x < bounds.maxX + margin;
-    walls.north.visible = p.z > bounds.minZ - margin;
-    walls.south.visible = p.z < bounds.maxZ + margin;
+    for (const set of wallSets) set.group.visible = set.isVisible(p, margin);
     ceiling.visible = p.y < bounds.height - 0.05;
   }
 

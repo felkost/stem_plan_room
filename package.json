@@ -7,9 +7,13 @@
   "scripts": {
     "dev": "vite",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify": "npm run typecheck && npm run test",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "start": "serve dist -s -l 3000"
+    "start": "serve dist -s -l 3000",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -23,6 +27,7 @@
     "@types/three": "^0.172.0",
     "@vitejs/plugin-react": "^4.3.4",
     "typescript": "~5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^4.1.10"
   }
 }

@@ -15,9 +15,9 @@ export interface ShelfBuild {
 
 export function buildDisplayCabinet(): ShelfBuild {
   const g = new THREE.Group();
-  const w = 0.9;
+  const w = 1.62;
   const h = 1.6;
-  const d = 0.487;
+  const d = 0.409;
   const wood = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#b08050'), roughness: 0.55 });
   const glass = new THREE.MeshPhysicalMaterial({
     color: 0xdcecf5,
@@ -50,21 +50,22 @@ export function buildDisplayCabinet(): ShelfBuild {
   g.add(box(w, 0.02, 0.015, wood, 0, h - 0.075, d / 2 - 0.005));
 
   // Наповнення: нижня секція — контейнери з деталями
-  const bin1 = box(0.3, 0.18, 0.35, standardMat(0x3b6fb5, 0.6), -0.22, 0.06 + 0.11, 0);
-  const bin2 = box(0.3, 0.18, 0.35, standardMat(0x707880, 0.6), 0.18, 0.06 + 0.11, 0);
-  g.add(bin1, bin2);
+  const bin1 = box(0.3, 0.18, 0.3, standardMat(0x3b6fb5, 0.6), -0.5, 0.06 + 0.11, 0);
+  const bin2 = box(0.3, 0.18, 0.3, standardMat(0x707880, 0.6), -0.1, 0.06 + 0.11, 0);
+  const bin3 = box(0.3, 0.18, 0.3, standardMat(0x2f9e44, 0.6), 0.34, 0.06 + 0.11, 0);
+  g.add(bin1, bin2, bin3);
 
   // Полиця 1 — робот NXT
   const nxt = buildNxtRobot();
   nxt.scale.setScalar(0.92);
-  nxt.position.set(-0.03, 0.492, 0.02);
+  nxt.position.set(-0.35, 0.492, 0.02);
   nxt.rotation.y = -0.4;
   g.add(nxt);
 
   // Полиця 2 — робот SPIKE + кубок
   const spike = buildSpikeRobot();
   spike.group.scale.setScalar(0.85);
-  spike.group.position.set(-0.12, 0.912, 0);
+  spike.group.position.set(-0.4, 0.912, 0);
   spike.group.rotation.y = 0.5;
   g.add(spike.group);
   const goldMat = standardMat(0xd8a417, 0.25, 0.9);
@@ -74,7 +75,7 @@ export function buildDisplayCabinet(): ShelfBuild {
   const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.02, 0.07, 14), goldMat);
   cup.position.set(0, 0.135, 0);
   trophy.add(cup);
-  trophy.position.set(0.26, 0.912, 0.02);
+  trophy.position.set(0.45, 0.912, 0.02);
   g.add(trophy);
 
   // Верхня полиця — коробки конструкторів
@@ -87,8 +88,9 @@ export function buildDisplayCabinet(): ShelfBuild {
     bx.rotation.x = lean;
     return bx;
   };
-  g.add(makeBox('nxt', -0.2, -0.12));
-  g.add(makeBox('spike', 0.18, -0.12));
+  g.add(makeBox('nxt', -0.5, -0.12));
+  g.add(makeBox('spike', -0.08, -0.12));
+  g.add(makeBox('spike', 0.4, -0.1));
 
   return { group: g, update: spike.update };
 }

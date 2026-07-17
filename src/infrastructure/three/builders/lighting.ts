@@ -1,5 +1,5 @@
 /**
- * Освітлення: небесна півсфера, «сонце» крізь західні вікна (з тінями),
+ * Освітлення: небесна півсфера, «сонце» крізь східні вікна (з тінями),
  * стельові LED-панелі (RectAreaLight).
  */
 import * as THREE from 'three';
@@ -18,10 +18,10 @@ export function buildLighting(scene: THREE.Scene): { sun: THREE.DirectionalLight
   const hemi = new THREE.HemisphereLight(0xdfeaff, 0x8f8574, 0.22);
   scene.add(hemi);
 
-  // Сонце — із заходу-південного заходу, крізь вікна (положисто, щоб плями світла були довші)
+  // Сонце — зі сходу-південного сходу, крізь вікна (положисто, щоб плями світла були довші)
   const sun = new THREE.DirectionalLight(0xfff2dc, 3.2);
-  sun.position.set(-7, 5.2, 3.2);
-  sun.target.position.set(cm((ROOM.minX + ROOM.maxX) / 2), 0, cm((ROOM.minY + ROOM.maxY) / 2));
+  sun.position.set(13, 6, 4.6);
+  sun.target.position.set(cm((ROOM.minX + ROOM.alcove.maxX) / 2), 0, cm((ROOM.minY + ROOM.maxY) / 2));
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   sun.shadow.camera.near = 0.5;

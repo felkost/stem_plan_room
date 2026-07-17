@@ -1,19 +1,25 @@
 /**
- * Оболонка кімнати: підлога, стіни з вікнами та дверима, стеля з LED-панелями,
- * плінтуси, радіатори, постери, годинник.
- * Стіни згруповано за сторонами світу — рендерер ховає стіну, за якою стоїть камера.
+ * Оболонка Г-подібної кімнати: підлога/стеля за полігоном плану, стіни з
+ * вікнами (східні) та дверима (західна), фронт класу — північна стіна.
+ * Кожна стіна — окремий WallSet із власним правилом dollhouse-видимості:
+ * рендерер ховає стіну, з боку якої стоїть камера.
  */
 import * as THREE from 'three';
-import { ROOM, SOUTH_DOOR, WEST_WINDOWS, CEILING_LIGHTS } from '../../../domain/classroomLayout';
-import type { WallOpening } from '../../../domain/entities';
+import { ALCOVE_WINDOWS, CEILING_LIGHTS, EAST_WINDOWS, ROOM, WEST_DOOR } from '../../../domain/classroomLayout';
 import { box, cm, standardMat } from './common';
 import { makeClockTexture, makeFloorTexture, makePosterTexture, makeWoodTexture } from './textures';
 
+export interface WallSet {
+  group: THREE.Group;
+  /** Чи видима стіна для камери у точці p (dollhouse-правило). */
+  isVisible: (p: THREE.Vector3, margin: number) => boolean;
+}
+
 export interface RoomBuild {
   group: THREE.Group;
-  /** Групи стін за сторонами — для приховування з боку камери. */
-  walls: { west: THREE.Group; east: THREE.Group; north: THREE.Group; south: THREE.Group };
+  wallSets: WallSet[];
   ceiling: THREE.Group;
+  /** Загальний обмежувальний бокс кімнати (включно з нішею). */
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number; height: number };
 }
 
@@ -87,8 +93,9 @@ function windowAssembly(opening: { center: number; width: number; sill: number; 
   g.add(box(w, fw, 0.07, frameMat, x, opening.sill + h - fw / 2, 0));
   g.add(box(fw, h, 0.07, frameMat, x - w / 2 + fw / 2, yMid, 0));
   g.add(box(fw, h, 0.07, frameMat, x + w / 2 - fw / 2, yMid, 0));
-  // імпости: вертикальний і горизонтальний
-  g.add(box(fw * 0.8, h, 0.06, frameMat, x, yMid, 0));
+  // імпости: два вертикальні (потрійне вікно) і горизонтальний
+  g.add(box(fw * 0.8, h, 0.06, frameMat, x - w / 6, yMid, 0));
+  g.add(box(fw * 0.8, h, 0.06, frameMat, x + w / 6, yMid, 0));
   g.add(box(w, fw * 0.8, 0.06, frameMat, x, opening.sill + h * 0.62, 0));
   // скло (не блокує сонце — інакше тіні «зачинили» б вікна)
   const glass = new THREE.Mesh(new THREE.PlaneGeometry(w - fw, h - fw), glassMat);
@@ -110,26 +117,24 @@ function windowAssembly(opening: { center: number; width: number; sill: number; 
   return g;
 }
 
-/** Двері (закриті) з рамою та ручкою. */
-function doorAssembly(opening: WallOpening, length: number, thickness: number): THREE.Group {
+/** Двері (закриті) з рамою та ручкою; центр у (0,0), фронт у локальний +z. */
+function doorAssembly(width: number, height: number): THREE.Group {
   const g = new THREE.Group();
-  const x = cm(opening.center) - length / 2;
-  const w = cm(opening.width);
-  const h = cm(opening.height);
+  const w = width;
+  const h = height;
   // лиштва
-  g.add(box(w + 0.14, 0.07, thickness + 0.04, frameMat, x, h + 0.035, 0));
-  g.add(box(0.07, h + 0.07, thickness + 0.04, frameMat, x - w / 2 - 0.035, (h + 0.07) / 2, 0));
-  g.add(box(0.07, h + 0.07, thickness + 0.04, frameMat, x + w / 2 + 0.035, (h + 0.07) / 2, 0));
+  g.add(box(w + 0.14, 0.07, 0.12, frameMat, 0, h + 0.035, 0));
+  g.add(box(0.07, h + 0.07, 0.12, frameMat, -w / 2 - 0.035, (h + 0.07) / 2, 0));
+  g.add(box(0.07, h + 0.07, 0.12, frameMat, w / 2 + 0.035, (h + 0.07) / 2, 0));
   // полотно
-  const leaf = box(w - 0.04, h - 0.02, 0.05, doorMat, x, (h - 0.02) / 2, 0);
-  g.add(leaf);
+  g.add(box(w - 0.04, h - 0.02, 0.05, doorMat, 0, (h - 0.02) / 2, 0));
   // фільонки
-  g.add(box(w - 0.24, h * 0.38, 0.02, doorMat, x, h * 0.68, 0.035));
-  g.add(box(w - 0.24, h * 0.3, 0.02, doorMat, x, h * 0.22, 0.035));
+  g.add(box(w - 0.24, h * 0.38, 0.02, doorMat, 0, h * 0.68, 0.035));
+  g.add(box(w - 0.24, h * 0.3, 0.02, doorMat, 0, h * 0.22, 0.035));
   // ручка
   const handle = new THREE.Mesh(new THREE.CapsuleGeometry(0.012, 0.1, 6, 10), handleMat);
   handle.rotation.z = Math.PI / 2;
-  handle.position.set(x - w / 2 + 0.09, 1.02, 0.05);
+  handle.position.set(-w / 2 + 0.09, 1.02, 0.05);
   g.add(handle);
   return g;
 }
@@ -157,35 +162,59 @@ function clock(): THREE.Group {
   return g;
 }
 
+/**
+ * Полігон Г-подібної кімнати у координатах плану (см → м).
+ * mirrorZ=true — для підлоги (shape-y = -z після повороту -90° навколо X),
+ * mirrorZ=false — для стелі (поворот +90°).
+ */
+function roomShape(mirrorZ: boolean): THREE.Shape {
+  const s = mirrorZ ? -1 : 1;
+  const pts: Array<[number, number]> = [
+    [ROOM.minX, ROOM.minY],
+    [ROOM.alcove.maxX, ROOM.alcove.minY],
+    [ROOM.alcove.maxX, ROOM.alcove.maxY],
+    [ROOM.maxX, ROOM.alcove.maxY],
+    [ROOM.maxX, ROOM.maxY],
+    [ROOM.minX, ROOM.maxY],
+  ];
+  const shape = new THREE.Shape();
+  pts.forEach(([px, py], i) => {
+    if (i === 0) shape.moveTo(cm(px), s * cm(py));
+    else shape.lineTo(cm(px), s * cm(py));
+  });
+  shape.closePath();
+  return shape;
+}
+
 export function buildRoom(): RoomBuild {
   const group = new THREE.Group();
   const minX = cm(ROOM.minX);
   const maxX = cm(ROOM.maxX);
   const minZ = cm(ROOM.minY);
   const maxZ = cm(ROOM.maxY);
+  const aMaxX = cm(ROOM.alcove.maxX);
+  const aMaxZ = cm(ROOM.alcove.maxY);
   const height = cm(ROOM.height);
   const t = cm(ROOM.wallThickness);
-  const width = maxX - minX;
-  const depth = maxZ - minZ;
-  const cx = (minX + maxX) / 2;
-  const cz = (minZ + maxZ) / 2;
 
-  // Підлога
+  // Підлога — Г-подібний полігон (UV ShapeGeometry — у метрах, масштаб через repeat)
   const floorTex = makeFloorTexture();
+  floorTex.wrapS = THREE.RepeatWrapping;
+  floorTex.wrapT = THREE.RepeatWrapping;
+  floorTex.repeat.set(0.8, 0.8);
   const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(width, depth),
+    new THREE.ShapeGeometry(roomShape(true)),
     new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.55 }),
   );
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(cx, 0, cz);
   floor.receiveShadow = true;
   group.add(floor);
 
   // Стеля (окрема група — ховається при погляді згори)
   const ceiling = new THREE.Group();
-  const ceilPlane = new THREE.Mesh(new THREE.PlaneGeometry(width + 2 * t, depth + 2 * t), ceilingMat);
+  const ceilPlane = new THREE.Mesh(new THREE.ShapeGeometry(roomShape(false)), ceilingMat);
   ceilPlane.rotation.x = Math.PI / 2;
-  ceilPlane.position.set(cx, height, cz);
+  ceilPlane.position.y = height;
   ceiling.add(ceilPlane);
   // LED-панелі (емісивні плафони; самі джерела світла — у lighting.ts)
   const panelMat = new THREE.MeshStandardMaterial({
@@ -203,92 +232,119 @@ export function buildRoom(): RoomBuild {
   group.add(ceiling);
 
   // Стіни моделюються вздовж локальної осі X з інтер'єром у напрямку локального +z.
-  // Після повороту групи локальна координата "від лівого краю" L обчислюється так,
-  // щоб отвір потрапив у потрібну світову координату (з урахуванням дзеркалення).
 
-  // Західна стіна (з вікнами): інтер'єр +x ⇒ rotation.y=+90°, локальний +x → світовий -z
-  const westOpenings = WEST_WINDOWS.map((w) => ({
-    center: maxZ - cm(w.center), // дзеркалення вздовж стіни
+  // Західна стіна (з дверима): інтер'єр +x ⇒ rotation.y=+90°, локальний +x → світовий -z
+  const westOpenings = [{
+    center: maxZ - cm(WEST_DOOR.center), // дзеркалення вздовж стіни
+    width: cm(WEST_DOOR.width),
+    sill: 0,
+    height: cm(WEST_DOOR.height),
+  }];
+  const west = new THREE.Group();
+  const westWall = wallWithOpenings(maxZ - minZ, height, t, wallMat, westOpenings);
+  westWall.rotation.y = Math.PI / 2;
+  westWall.position.set(minX - t / 2, 0, (minZ + maxZ) / 2);
+  west.add(westWall);
+  const door = doorAssembly(cm(WEST_DOOR.width), cm(WEST_DOOR.height));
+  door.rotation.y = Math.PI / 2; // фронт → +x (усередину кімнати)
+  door.position.set(minX - 0.02, 0, cm(WEST_DOOR.center));
+  west.add(door);
+  group.add(west);
+
+  // Північна стіна (фронт класу: акцентний колір; охоплює основну зону та нішу)
+  const north = new THREE.Group();
+  const northWall = wallWithOpenings(aMaxX - minX + 2 * t, height, t, frontWallMat, []);
+  northWall.position.set((minX + aMaxX) / 2, 0, minZ - t / 2);
+  north.add(northWall);
+  const wallClock = clock();
+  wallClock.position.set(5.1, 2.12, minZ + 0.03); // між дошкою та нішею, фронт → +z
+  north.add(wallClock);
+  group.add(north);
+
+  // Східна стіна основної зони (2 вікна): інтер'єр -x ⇒ rotation.y=-90°,
+  // локальний +x → світовий +z; тягнеться від ніші до південної стіни
+  const eastLen = maxZ + t - aMaxZ;
+  const eastOpenings = EAST_WINDOWS.map((w) => ({
+    center: cm(w.center) - aMaxZ,
     width: cm(w.width),
     sill: cm(w.sill),
     height: cm(w.height),
   }));
-  const west = new THREE.Group();
-  const westWall = wallWithOpenings(depth, height, t, wallMat, westOpenings);
-  for (const o of westOpenings) westWall.add(windowAssembly(o, depth, t));
-  westWall.rotation.y = Math.PI / 2;
-  westWall.position.set(minX - t / 2, 0, cz);
-  west.add(westWall);
-  group.add(west);
+  const eastMain = new THREE.Group();
+  const eastMainWall = wallWithOpenings(eastLen, height, t, wallMat, eastOpenings);
+  for (const o of eastOpenings) eastMainWall.add(windowAssembly(o, eastLen, t));
+  eastMainWall.rotation.y = -Math.PI / 2;
+  eastMainWall.position.set(maxX + t / 2, 0, (aMaxZ + maxZ + t) / 2);
+  eastMain.add(eastMainWall);
+  // постер між вікнами
+  const posterE = poster(0);
+  posterE.rotation.y = -Math.PI / 2;
+  posterE.position.set(maxX - 0.01, 1.55, 2.6);
+  eastMain.add(posterE);
+  group.add(eastMain);
 
-  // Східна стіна (глуха, з постерами): інтер'єр -x ⇒ rotation.y=-90°
-  const east = new THREE.Group();
-  const eastWall = wallWithOpenings(depth, height, t, wallMat, []);
-  eastWall.rotation.y = -Math.PI / 2;
-  eastWall.position.set(maxX + t / 2, 0, cz);
-  east.add(eastWall);
-  const posterE1 = poster(0);
-  posterE1.rotation.y = -Math.PI / 2;
-  posterE1.position.set(maxX - 0.01, 1.55, 1.6);
-  east.add(posterE1);
-  const posterE2 = poster(2);
-  posterE2.rotation.y = -Math.PI / 2;
-  posterE2.position.set(maxX - 0.01, 1.55, 2.6);
-  east.add(posterE2);
-  group.add(east);
+  // Східна стіна ніші (1 вікно)
+  const aEastLen = aMaxZ - minZ;
+  const aEastOpenings = ALCOVE_WINDOWS.map((w) => ({
+    center: cm(w.center) - minZ,
+    width: cm(w.width),
+    sill: cm(w.sill),
+    height: cm(w.height),
+  }));
+  const eastAlcove = new THREE.Group();
+  const eastAlcoveWall = wallWithOpenings(aEastLen, height, t, wallMat, aEastOpenings);
+  for (const o of aEastOpenings) eastAlcoveWall.add(windowAssembly(o, aEastLen, t));
+  eastAlcoveWall.rotation.y = -Math.PI / 2;
+  eastAlcoveWall.position.set(aMaxX + t / 2, 0, (minZ + aMaxZ) / 2);
+  eastAlcove.add(eastAlcoveWall);
+  group.add(eastAlcove);
 
-  // Північна стіна (глуха; постери) — охоплює кути
-  const north = new THREE.Group();
-  const northWall = wallWithOpenings(width + 2 * t, height, t, wallMat, []);
-  northWall.position.set(cx, 0, minZ - t / 2);
-  north.add(northWall);
-  const posterN1 = poster(1);
-  posterN1.position.set(2.3, 1.6, minZ + 0.01);
-  north.add(posterN1);
-  const posterN2 = poster(3);
-  posterN2.position.set(3.1, 1.6, minZ + 0.01);
-  north.add(posterN2);
-  group.add(north);
-
-  // Південна стіна (фронт класу: акцентний колір, двері, годинник):
-  // інтер'єр -z ⇒ rotation.y=180°, локальна X дзеркалиться відносно світової
+  // Південна стіна основної зони (глуха, з постерами): інтер'єр -z ⇒ rotation.y=180°
   const south = new THREE.Group();
-  const southWall = wallWithOpenings(
-    width + 2 * t,
-    height,
-    t,
-    frontWallMat,
-    [{ center: maxX + t - cm(SOUTH_DOOR.center), width: cm(SOUTH_DOOR.width), sill: 0, height: cm(SOUTH_DOOR.height) }],
-  );
+  const southWall = wallWithOpenings(maxX - minX + 2 * t, height, t, wallMat, []);
   southWall.rotation.y = Math.PI;
-  southWall.position.set(cx, 0, maxZ + t / 2);
+  southWall.position.set((minX + maxX) / 2, 0, maxZ + t / 2);
   south.add(southWall);
-  const door = doorAssembly(SOUTH_DOOR, 0, 0.08);
-  door.rotation.y = Math.PI;
-  door.position.set(cm(SOUTH_DOOR.center), 0, maxZ + 0.01);
-  south.add(door);
-  const wallClock = clock();
-  wallClock.rotation.y = Math.PI;
-  wallClock.position.set(3.54, 2.12, maxZ - 0.03);
-  south.add(wallClock);
+  const posterS1 = poster(1);
+  posterS1.rotation.y = Math.PI;
+  posterS1.position.set(2.0, 1.6, maxZ - 0.01);
+  south.add(posterS1);
+  const posterS2 = poster(3);
+  posterS2.rotation.y = Math.PI;
+  posterS2.position.set(2.8, 1.6, maxZ - 0.01);
+  south.add(posterS2);
   group.add(south);
 
-  // Плінтуси по периметру
+  // Південна стіна ніші (між нішею та зовнішнім кутом): інтер'єр -z
+  const southAlcove = new THREE.Group();
+  const southAlcoveWall = wallWithOpenings(aMaxX - maxX, height, t, wallMat, []);
+  southAlcoveWall.rotation.y = Math.PI;
+  southAlcoveWall.position.set((maxX + t + aMaxX + t) / 2, 0, aMaxZ + t / 2);
+  southAlcove.add(southAlcoveWall);
+  const posterSA = poster(2);
+  posterSA.rotation.y = Math.PI;
+  posterSA.position.set((maxX + aMaxX) / 2, 1.55, aMaxZ - 0.01);
+  southAlcove.add(posterSA);
+  group.add(southAlcove);
+
+  // Плінтуси по периметру (західний — двома сегментами обабіч дверей)
   const bbH = 0.08;
   const addBaseboard = (target: THREE.Group, w: number, x: number, z: number, rotY = 0) => {
+    if (w <= 0.01) return;
     const b = box(w, bbH, 0.015, baseboardMat, 0, bbH / 2, 0);
     b.rotation.y = rotY;
     b.position.set(x, bbH / 2, z);
     target.add(b);
   };
-  addBaseboard(north, width, cx, minZ + 0.008);
-  addBaseboard(west, depth, minX + 0.008, cz, Math.PI / 2);
-  addBaseboard(east, depth, maxX - 0.008, cz, Math.PI / 2);
-  // південний плінтус — двома сегментами обабіч дверей
-  const doorLeft = cm(SOUTH_DOOR.center - SOUTH_DOOR.width / 2);
-  const doorRight = cm(SOUTH_DOOR.center + SOUTH_DOOR.width / 2);
-  addBaseboard(south, doorLeft - minX, minX + (doorLeft - minX) / 2, maxZ - 0.008);
-  addBaseboard(south, maxX - doorRight, doorRight + (maxX - doorRight) / 2, maxZ - 0.008);
+  addBaseboard(north, aMaxX - minX, (minX + aMaxX) / 2, minZ + 0.008);
+  addBaseboard(south, maxX - minX, (minX + maxX) / 2, maxZ - 0.008);
+  addBaseboard(southAlcove, aMaxX - maxX, (maxX + aMaxX) / 2, aMaxZ - 0.008);
+  addBaseboard(eastMain, maxZ - aMaxZ, maxX - 0.008, (aMaxZ + maxZ) / 2, Math.PI / 2);
+  addBaseboard(eastAlcove, aMaxZ - minZ, aMaxX - 0.008, (minZ + aMaxZ) / 2, Math.PI / 2);
+  const doorNorth = cm(WEST_DOOR.center - WEST_DOOR.width / 2);
+  const doorSouth = cm(WEST_DOOR.center + WEST_DOOR.width / 2);
+  addBaseboard(west, doorNorth - minZ, minX + 0.008, (minZ + doorNorth) / 2, Math.PI / 2);
+  addBaseboard(west, maxZ - doorSouth, minX + 0.008, (doorSouth + maxZ) / 2, Math.PI / 2);
 
   // Стіни та стеля відкидають тіні (сонце світить лише крізь вікна), скло — ні
   group.traverse((child) => {
@@ -298,10 +354,20 @@ export function buildRoom(): RoomBuild {
     }
   });
 
+  // Dollhouse-правила: стіну ховаємо, коли камера опиняється з її зовнішнього боку
+  const wallSets: WallSet[] = [
+    { group: west, isVisible: (p, m) => p.x > minX - m },
+    { group: north, isVisible: (p, m) => p.z > minZ - m },
+    { group: eastMain, isVisible: (p, m) => p.x < maxX + m },
+    { group: eastAlcove, isVisible: (p, m) => p.x < aMaxX + m },
+    { group: south, isVisible: (p, m) => p.z < maxZ + m },
+    { group: southAlcove, isVisible: (p, m) => p.z < aMaxZ + m },
+  ];
+
   return {
     group,
-    walls: { west, east, north, south },
+    wallSets,
     ceiling,
-    bounds: { minX, maxX, minZ, maxZ, height },
+    bounds: { minX, maxX: aMaxX, minZ, maxZ, height },
   };
 }

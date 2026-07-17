@@ -21,12 +21,22 @@ export interface PlacedItem {
   height: number;
 }
 
-/** Габарити кімнати, см. */
-export interface RoomSpec {
+/** Прямокутна ділянка плану, см. */
+export interface RectBounds {
   minX: number;
   maxX: number;
   minY: number;
   maxY: number;
+}
+
+/**
+ * Габарити Г-подібної кімнати, см (внутрішні межі).
+ * Основна зона minX..maxX × minY..maxY плюс ніша вчителя (alcove),
+ * що прилягає до основної зони зі сходу і відкрита в неї (без стіни між ними).
+ */
+export interface RoomSpec extends RectBounds {
+  /** Ніша вчителя (північно-східний виступ) */
+  alcove: RectBounds;
   /** Висота стін, см */
   height: number;
   /** Товщина стін, см */

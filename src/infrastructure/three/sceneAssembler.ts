@@ -1,6 +1,6 @@
 /**
  * Збирання повної сцени кабінету: кімната, меблі за координатами плану,
- * роботи та арена. Повертає групи стін/стелі для приховування з боку камери
+ * роботи та арена. Повертає набори стін/стелю для dollhouse-приховування
  * та список функцій оновлення для анімації.
  */
 import * as THREE from 'three';
@@ -14,10 +14,12 @@ import {
   MONITORS,
   NETWORK_SWITCH,
   POWER_STATION,
+  STUDENT_CHAIRS,
   STUDENT_DESKS,
   TEACHER_CHAIR,
   TEACHER_DESK,
-  UPS_UNIT,
+  TEACHER_MONITOR,
+  WORK_TABLE,
 } from '../../domain/classroomLayout';
 import { cm, enableShadows, placeItem } from './builders/common';
 import {
@@ -30,6 +32,7 @@ import {
   buildStudentDesk,
   buildSwitchRack,
   buildTeacherDesk,
+  buildWorkTable,
 } from './builders/furniture';
 import { buildLighting } from './builders/lighting';
 import { buildRoom, type RoomBuild } from './builders/room';
@@ -50,24 +53,12 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   scene.add(room.group);
   const { sun } = buildLighting(scene);
 
-  // Учнівські столи та монітори
+  // Учнівські столи, монітори та крісла — за координатами плану
   for (const desk of STUDENT_DESKS) {
     const mesh = buildStudentDesk();
     placeItem(mesh, desk);
     enableShadows(mesh);
     scene.add(mesh);
-    // стілець перед кожним столом (з боку фронту стола, трохи відсунутий)
-    const chair = buildOfficeChair(0x4a5d54);
-    const a = -(desk.angle ?? 0);
-    const offset = 0.62;
-    chair.position.set(
-      cm(desk.x) + Math.sin(a) * offset,
-      0,
-      cm(desk.y) + Math.cos(a) * offset,
-    );
-    chair.rotation.y = a + Math.PI + (Math.random() - 0.5) * 0.5;
-    enableShadows(chair);
-    scene.add(chair);
   }
   for (const monitor of MONITORS) {
     const mesh = buildMonitor();
@@ -75,8 +66,14 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
     enableShadows(mesh);
     scene.add(mesh);
   }
+  for (const chairSpec of STUDENT_CHAIRS) {
+    const chair = buildOfficeChair(0x4a5d54);
+    placeItem(chair, chairSpec);
+    enableShadows(chair);
+    scene.add(chair);
+  }
 
-  // Зона вчителя
+  // Зона вчителя (ніша на північному сході)
   const teacherDesk = buildTeacherDesk();
   placeItem(teacherDesk, TEACHER_DESK);
   enableShadows(teacherDesk);
@@ -85,30 +82,36 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   placeItem(teacherChair, TEACHER_CHAIR);
   enableShadows(teacherChair);
   scene.add(teacherChair);
+  const teacherMonitor = buildMonitor();
+  placeItem(teacherMonitor, TEACHER_MONITOR, 0.012);
+  enableShadows(teacherMonitor);
+  scene.add(teacherMonitor);
 
-  // Вітрина з роботами
+  // Вітрина з роботами (на місці книжкової шафи біля північної стіни ніші)
   const cabinet = buildDisplayCabinet();
   placeItem(cabinet.group, DISPLAY_CABINET);
   enableShadows(cabinet.group);
   scene.add(cabinet.group);
   updatables.push((_dt, t) => cabinet.update(t));
 
-  // Фронт класу
-  const chalkboard = buildChalkboard();
+  // Фронт класу (північна стіна)
+  const chalkboard = buildChalkboard(cm(CHALKBOARD.width), cm(CHALKBOARD.height));
   placeItem(chalkboard, CHALKBOARD);
+  // модель «дзеркала» у sh3d має фронт у -y, тож розвертаємо на π до класу
+  chalkboard.rotation.y += Math.PI;
   scene.add(chalkboard);
   const panel = buildInteractivePanel();
   placeItem(panel, INTERACTIVE_PANEL);
   enableShadows(panel);
   scene.add(panel);
-  const frontCabinet = buildLowCabinet();
+  const frontCabinet = buildLowCabinet(cm(FRONT_CABINET.width), cm(FRONT_CABINET.height), cm(FRONT_CABINET.depth));
   placeItem(frontCabinet, FRONT_CABINET);
   enableShadows(frontCabinet);
   scene.add(frontCabinet);
   // Демонстраційний NXT на тумбі біля дошки
   const demoNxt = buildNxtRobot();
-  demoNxt.position.set(cm(FRONT_CABINET.x), 0.74, cm(FRONT_CABINET.y));
-  demoNxt.rotation.y = -2.6;
+  demoNxt.position.set(cm(FRONT_CABINET.x), cm(FRONT_CABINET.height), cm(FRONT_CABINET.y));
+  demoNxt.rotation.y = -0.6;
   enableShadows(demoNxt);
   scene.add(demoNxt);
   const frontChair = buildOfficeChair();
@@ -116,7 +119,13 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   enableShadows(frontChair);
   scene.add(frontChair);
 
-  // Техніка
+  // Червоний робочий стіл для збирання роботів (біля східної стіни)
+  const workTable = buildWorkTable();
+  placeItem(workTable, WORK_TABLE);
+  enableShadows(workTable);
+  scene.add(workTable);
+
+  // Техніка у ніші вчителя
   const rack = buildSwitchRack();
   placeItem(rack, NETWORK_SWITCH);
   rack.position.y = 0; // елевація 62 см з плану — це верх стійки; сама стійка стоїть на підлозі
@@ -126,12 +135,8 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   placeItem(powerStation, POWER_STATION);
   enableShadows(powerStation);
   scene.add(powerStation);
-  const ups = buildPowerStation();
-  placeItem(ups, UPS_UNIT);
-  enableShadows(ups);
-  scene.add(ups);
 
-  // Арена з анімованим роботом
+  // Тренувальне поле з анімованим роботом (вільний центр класу)
   const arena = buildArena();
   arena.group.position.set(cm(ARENA.x), 0, cm(ARENA.y));
   enableShadows(arena.group);

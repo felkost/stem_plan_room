@@ -166,10 +166,8 @@ export function buildTeacherDesk(): THREE.Group {
 }
 
 /** Зелена крейдяна дошка з поличкою для крейди. */
-export function buildChalkboard(): THREE.Group {
+export function buildChalkboard(w = 2.893, h = 1.04): THREE.Group {
   const g = new THREE.Group();
-  const w = 1.814;
-  const h = 0.72;
   const frame = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#7a5230'), roughness: 0.6 });
   // основа (кріпиться до стіни за групою)
   g.add(box(w, h, 0.025, frame, 0, h / 2, 0));
@@ -193,21 +191,21 @@ export function buildChalkboard(): THREE.Group {
   return g;
 }
 
-/** Інтерактивна панель на мобільній стійці. */
+/** Інтерактивна панель («телевізор» із плану) на мобільній стійці. */
 export function buildInteractivePanel(): THREE.Group {
   const g = new THREE.Group();
-  const totalH = 1.257;
-  const panelW = 1.225;
-  const panelH = 0.72;
+  const totalH = 1.757;
+  const panelW = 1.585;
+  const panelH = 0.89;
   // стійка
   for (const s of [-1, 1]) {
-    g.add(box(0.05, totalH - 0.08, 0.05, blackPlasticMat, s * 0.42, (totalH - 0.08) / 2 + 0.06, -0.05));
-    g.add(box(0.06, 0.05, 0.5, blackPlasticMat, s * 0.42, 0.045, 0));
+    g.add(box(0.05, totalH - 0.08, 0.05, blackPlasticMat, s * 0.55, (totalH - 0.08) / 2 + 0.06, -0.05));
+    g.add(box(0.06, 0.05, 0.5, blackPlasticMat, s * 0.55, 0.045, 0));
     for (const zz of [-0.2, 0.2]) {
-      g.add(cylinder(0.035, 0.03, grayPlasticMat, s * 0.42, 0.02, zz, 12));
+      g.add(cylinder(0.035, 0.03, grayPlasticMat, s * 0.55, 0.02, zz, 12));
     }
   }
-  g.add(box(0.9, 0.05, 0.05, blackPlasticMat, 0, 0.35, -0.05));
+  g.add(box(1.16, 0.05, 0.05, blackPlasticMat, 0, 0.35, -0.05));
   // панель
   const py = totalH - panelH / 2;
   const panel = new THREE.Mesh(new RoundedBoxGeometry(panelW, panelH + 0.06, 0.06, 3, 0.012), bezelMat);
@@ -238,6 +236,32 @@ export function buildLowCabinet(w = 0.86, h = 0.74, d = 0.44): THREE.Group {
   for (const s of [-1, 1]) {
     g.add(box(w / 2 - 0.03, h - 0.1, 0.012, darkWoodMat, s * (w / 4 - 0.005), (h - 0.06) / 2, d / 2 + 0.002));
     g.add(cylinder(0.008, 0.05, metalLegMat, s * 0.06, h / 2, d / 2 + 0.02, 8));
+  }
+  return g;
+}
+
+/** Червоний робочий стіл для збирання роботів (квадратний, з плану). */
+export function buildWorkTable(): THREE.Group {
+  const g = new THREE.Group();
+  const w = 0.935;
+  const d = 0.936;
+  const h = 0.72;
+  const topMat = standardMat(0xd94a32, 0.55);
+  g.add(box(w, 0.04, d, topMat, 0, h - 0.02, 0));
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      g.add(box(0.05, h - 0.04, 0.05, metalLegMat, sx * (w / 2 - 0.05), (h - 0.04) / 2, sz * (d / 2 - 0.05)));
+    }
+  }
+  // царги
+  g.add(box(w - 0.14, 0.08, 0.02, metalLegMat, 0, h - 0.1, d / 2 - 0.05));
+  g.add(box(w - 0.14, 0.08, 0.02, metalLegMat, 0, h - 0.1, -d / 2 + 0.05));
+  // лоток із деталями LEGO
+  g.add(box(0.32, 0.07, 0.22, standardMat(0x3b6fb5, 0.6), -0.18, h + 0.035, -0.15));
+  const brickColors = [0xd92f2f, 0xf7d117, 0x2f9e44, 0x2f6bd9];
+  for (let i = 0; i < 8; i++) {
+    g.add(box(0.03, 0.018, 0.016, standardMat(brickColors[i % 4], 0.5),
+      -0.28 + (i % 4) * 0.065, h + 0.079, -0.2 + Math.floor(i / 4) * 0.09));
   }
   return g;
 }
