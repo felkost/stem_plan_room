@@ -6,11 +6,11 @@
 
 ## Поточний стан (2026-07-17)
 
-- [PR #1](https://github.com/felkost/stem_plan_room/pull/1) (інтер'єр + мобільна
-  адаптація) **змержено squash-ом у `main`** (`6ed1e22`). Handoff-доки та скіл
-  engineering-insights доїхали окремим PR із гілки `docs/handoff-insights`
-  (cherry-pick із `feat/interior_design`, бо PR #1 закрився раніше за їх пуш).
-- Гілка `feat/interior_design` більше не потрібна — можна видалити.
+- У `main` змержено: PR #1 (інтер'єр + мобільна адаптація, squash `6ed1e22`)
+  та PR #2 (handoff-доки + скіл engineering-insights, squash `26404f5`).
+  Робочі гілки видалено (локально й на GitHub).
+- **Активна гілка `feat/migration`** (від `26404f5`) — створена під наступний
+  етап (міграцію); задача етапу ще не сформульована.
 - Тести: 113 passed (домен: розташування/колізії/еталон; infra: чисті функції
   формату запису та профілю пристрою). `tsc --noEmit` і `npm run build` чисті.
 - Можливі наступні кроки: перевірка на реальному iPhone
