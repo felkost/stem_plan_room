@@ -9,6 +9,8 @@ import {
   DISPLAY_CABINET,
   FRONT_CABINET,
   FRONT_CHAIR,
+  GROUP_CHAIRS,
+  GROUP_TABLES,
   INTERACTIVE_PANEL,
   MONITORS,
   NETWORK_SWITCH,
@@ -23,6 +25,7 @@ import {
 import { cm, enableShadows, placeItem } from './builders/common';
 import {
   buildChalkboard,
+  buildGroupTable,
   buildInteractivePanel,
   buildLowCabinet,
   buildMonitor,
@@ -65,7 +68,21 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
     scene.add(mesh);
   }
   for (const chairSpec of STUDENT_CHAIRS) {
-    const chair = buildOfficeChair(0x4a5d54);
+    const chair = buildOfficeChair(0xb3b3b0);
+    placeItem(chair, chairSpec);
+    enableShadows(chair);
+    scene.add(chair);
+  }
+
+  // Групові столи в центрі кабінету зі стільцями (нові об'єкти поза планом)
+  for (const tableSpec of GROUP_TABLES) {
+    const table = buildGroupTable();
+    placeItem(table, tableSpec);
+    enableShadows(table);
+    scene.add(table);
+  }
+  for (const chairSpec of GROUP_CHAIRS) {
+    const chair = buildOfficeChair(0xb3b3b0);
     placeItem(chair, chairSpec);
     enableShadows(chair);
     scene.add(chair);
@@ -76,7 +93,7 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   placeItem(teacherDesk, TEACHER_DESK);
   enableShadows(teacherDesk);
   scene.add(teacherDesk);
-  const teacherChair = buildOfficeChair(0x5a2d2d);
+  const teacherChair = buildOfficeChair(0x8f8f8c);
   placeItem(teacherChair, TEACHER_CHAIR);
   enableShadows(teacherChair);
   scene.add(teacherChair);

@@ -26,19 +26,30 @@ function toTexture(canvas: HTMLCanvasElement, repeat?: [number, number]): THREE.
   return tex;
 }
 
-/** Лінолеум: спокійна сіро-бежева основа з дрібними вкрапленнями та швами плит. */
+/** Світло-сіра керамічна плитка великого формату з тонкими швами (2×2 на текстуру). */
 export function makeFloorTexture(): THREE.CanvasTexture {
   const [canvas, ctx] = makeCanvas(512, 512);
-  ctx.fillStyle = '#c9c3b2';
+  ctx.fillStyle = '#cfcdc8';
   ctx.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 5200; i++) {
+  // легка «мармуровість» бетонної плитки: великі напівпрозорі плями
+  for (let i = 0; i < 70; i++) {
     const x = Math.random() * 512;
     const y = Math.random() * 512;
-    const l = Math.random();
-    ctx.fillStyle = l > 0.6 ? 'rgba(255,255,255,0.10)' : 'rgba(90,82,66,0.10)';
-    ctx.fillRect(x, y, 1.6, 1.6);
+    const r = 18 + Math.random() * 60;
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const light = Math.random() > 0.5;
+    grad.addColorStop(0, light ? 'rgba(255,255,255,0.06)' : 'rgba(120,118,112,0.06)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  ctx.strokeStyle = 'rgba(70,64,52,0.28)';
+  // дрібне зерно
+  for (let i = 0; i < 2200; i++) {
+    ctx.fillStyle = Math.random() > 0.55 ? 'rgba(255,255,255,0.05)' : 'rgba(110,108,102,0.05)';
+    ctx.fillRect(Math.random() * 512, Math.random() * 512, 1.4, 1.4);
+  }
+  // тонкі шви між плитками
+  ctx.strokeStyle = 'rgba(150,148,142,0.85)';
   ctx.lineWidth = 2;
   for (let i = 0; i <= 2; i++) {
     ctx.beginPath();
@@ -260,92 +271,124 @@ export function makeChalkboardTexture(): THREE.CanvasTexture {
   return toTexture(canvas);
 }
 
-/** Навчальний постер. */
+/**
+ * Навчальний постер у пастельній «інфографічній» стилістиці референсу:
+ * білий аркуш, кольоровий заголовок, м'ятні картки з псевдотекстом і
+ * контурною іконкою теми.
+ */
 export function makePosterTexture(kind: number): THREE.CanvasTexture {
   const [canvas, ctx] = makeCanvas(384, 560);
   const themes = [
-    { color: '#0e7490', title: 'РОБОТОТЕХНІКА', sub: 'від ідеї — до робота' },
-    { color: '#7c3aed', title: 'АЛГОРИТМИ', sub: 'думай як програміст' },
-    { color: '#16a34a', title: 'STEM', sub: 'наука • техніка • інженерія' },
-    { color: '#dc2626', title: 'БЕЗПЕКА', sub: 'в Інтернеті' },
+    { accent: '#2a9d8f', title: 'РОБОТОТЕХНІКА', sub: 'сенсори • мотори • код' },
+    { accent: '#457b9d', title: 'АЛГОРИТМИ', sub: 'думай як програміст' },
+    { accent: '#52796f', title: 'STEM', sub: 'наука • техніка • інженерія' },
+    { accent: '#bc6c25', title: 'БЕЗПЕКА', sub: 'в Інтернеті' },
   ];
   const t = themes[kind % themes.length];
-  ctx.fillStyle = '#f8fafc';
+  // аркуш із тонкою рамкою
+  ctx.fillStyle = '#fbfaf7';
   ctx.fillRect(0, 0, 384, 560);
-  ctx.fillStyle = t.color;
-  ctx.fillRect(0, 0, 384, 120);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 34px Arial';
+  ctx.strokeStyle = '#e3e0d8';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(6, 6, 372, 548);
+  // заголовок і підзаголовок
   ctx.textAlign = 'center';
-  ctx.fillText(t.title, 192, 74);
-  ctx.fillStyle = '#334155';
-  ctx.font = '20px Arial';
-  ctx.fillText(t.sub, 192, 156);
-  ctx.strokeStyle = t.color;
-  ctx.lineWidth = 6;
+  ctx.fillStyle = t.accent;
+  ctx.font = 'bold 30px Arial';
+  ctx.fillText(t.title, 192, 62);
+  ctx.fillStyle = '#6b7671';
+  ctx.font = '17px Arial';
+  ctx.fillText(t.sub, 192, 92);
+  ctx.fillStyle = t.accent;
+  ctx.fillRect(122, 108, 140, 4);
+  // детермінований псевдовипадковий генератор (стабільний вигляд постера)
+  let seed = kind * 31 + 7;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  // дві пастельні картки з рядками «тексту»
+  const cards = [
+    { y: 132, h: 118, bg: '#dcebe6' },
+    { y: 404, h: 118, bg: '#efe9da' },
+  ];
+  for (const card of cards) {
+    ctx.fillStyle = card.bg;
+    ctx.beginPath();
+    ctx.roundRect(26, card.y, 332, card.h, 10);
+    ctx.fill();
+    let ly = card.y + 24;
+    for (let line = 0; line < 4; line++) {
+      ctx.fillStyle = 'rgba(90,104,98,0.55)';
+      ctx.beginPath();
+      ctx.roundRect(44, ly, 120 + rand() * 176, 9, 4);
+      ctx.fill();
+      ly += 24;
+    }
+  }
+  // контурна іконка теми між картками
+  ctx.strokeStyle = t.accent;
+  ctx.lineWidth = 5;
+  const cy = 322; // центр зони іконки
   if (kind % 4 === 0) {
     // робот
-    ctx.strokeRect(122, 220, 140, 110);
-    ctx.strokeRect(152, 350, 80, 90);
+    ctx.strokeRect(122, cy - 58, 140, 76);
+    ctx.strokeRect(152, cy + 30, 80, 40);
     ctx.beginPath();
-    ctx.arc(162, 262, 14, 0, Math.PI * 2);
-    ctx.moveTo(236, 262);
-    ctx.arc(222, 262, 14, 0, Math.PI * 2);
+    ctx.arc(162, cy - 28, 11, 0, Math.PI * 2);
+    ctx.moveTo(233, cy - 28);
+    ctx.arc(222, cy - 28, 11, 0, Math.PI * 2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(152, 300);
-    ctx.lineTo(232, 300);
+    ctx.moveTo(157, cy - 2);
+    ctx.lineTo(227, cy - 2);
     ctx.stroke();
   } else if (kind % 4 === 1) {
     // блок-схема
-    ctx.strokeRect(142, 210, 100, 52);
+    ctx.strokeRect(147, cy - 66, 90, 36);
     ctx.beginPath();
-    ctx.moveTo(192, 262);
-    ctx.lineTo(192, 300);
+    ctx.moveTo(192, cy - 30);
+    ctx.lineTo(192, cy - 10);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(192, 300);
-    ctx.lineTo(252, 350);
-    ctx.lineTo(192, 400);
-    ctx.lineTo(132, 350);
+    ctx.moveTo(192, cy - 10);
+    ctx.lineTo(244, cy + 26);
+    ctx.lineTo(192, cy + 62);
+    ctx.lineTo(140, cy + 26);
     ctx.closePath();
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(192, 400);
-    ctx.lineTo(192, 440);
-    ctx.stroke();
-    ctx.strokeRect(142, 440, 100, 52);
   } else if (kind % 4 === 2) {
     // атом
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
-      ctx.ellipse(192, 330, 110, 44, (i * Math.PI) / 3, 0, Math.PI * 2);
+      ctx.ellipse(192, cy, 92, 34, (i * Math.PI) / 3, 0, Math.PI * 2);
       ctx.stroke();
     }
-    ctx.fillStyle = t.color;
+    ctx.fillStyle = t.accent;
     ctx.beginPath();
-    ctx.arc(192, 330, 16, 0, Math.PI * 2);
+    ctx.arc(192, cy, 12, 0, Math.PI * 2);
     ctx.fill();
   } else {
-    // щит
+    // щит із «пташкою»
     ctx.beginPath();
-    ctx.moveTo(192, 220);
-    ctx.lineTo(282, 258);
-    ctx.lineTo(272, 380);
-    ctx.lineTo(192, 450);
-    ctx.lineTo(112, 380);
-    ctx.lineTo(102, 258);
+    ctx.moveTo(192, cy - 66);
+    ctx.lineTo(258, cy - 40);
+    ctx.lineTo(250, cy + 34);
+    ctx.lineTo(192, cy + 70);
+    ctx.lineTo(134, cy + 34);
+    ctx.lineTo(126, cy - 40);
     ctx.closePath();
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(152, 330);
-    ctx.lineTo(185, 370);
-    ctx.lineTo(240, 285);
+    ctx.moveTo(164, cy);
+    ctx.lineTo(186, cy + 26);
+    ctx.lineTo(226, cy - 30);
     ctx.stroke();
   }
-  ctx.fillStyle = '#64748b';
-  ctx.font = '16px Arial';
-  ctx.fillText('Кабінет інформатики', 192, 520);
+  // футер
+  ctx.fillStyle = '#9aa39e';
+  ctx.font = '15px Arial';
+  ctx.fillText('Кабінет інформатики • STEM', 192, 542);
   ctx.textAlign = 'left';
   return toTexture(canvas);
 }

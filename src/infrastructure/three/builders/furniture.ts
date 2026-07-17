@@ -15,12 +15,14 @@ import {
 } from './textures';
 
 // Спільні матеріали (створюються один раз на модуль)
-const laminateMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#c89a63'), roughness: 0.5 });
-const darkWoodMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#8a5a2e'), roughness: 0.55 });
+const laminateMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#c6a06b'), roughness: 0.5 });
+const darkWoodMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#ab8253'), roughness: 0.55 });
 const metalLegMat = standardMat(0x9ea3a8, 0.35, 0.85);
+/** Чорна сталева труба квадратного перетину — О-подібні каркаси столів. */
+const steelFrameMat = standardMat(0x24262a, 0.5, 0.6);
 const blackPlasticMat = standardMat(0x1f2226, 0.6);
 const grayPlasticMat = standardMat(0x585d63, 0.65);
-const fabricMat = standardMat(0x35507a, 0.95);
+const fabricMat = standardMat(0xb3b3b0, 0.95);
 const bezelMat = standardMat(0x14161a, 0.45);
 const keyboardTex = makeKeyboardTexture();
 const keyboardTopMat = new THREE.MeshStandardMaterial({ map: keyboardTex, roughness: 0.7 });
@@ -28,6 +30,21 @@ const whitePlasticMat = standardMat(0xf2f2ee, 0.5);
 const chromeMat = standardMat(0xcfd2d6, 0.25, 0.9);
 
 let screenVariantCounter = 0;
+
+/**
+ * Бічна О-подібна рама стола з чорної квадратної труби (як у референсі):
+ * дві стійки + верхня й нижня перекладини. Центр рами в (0, x) по ширині.
+ */
+function sideLoopLeg(x: number, topY: number, depth: number, bar = 0.04): THREE.Group {
+  const g = new THREE.Group();
+  const zHalf = depth / 2 - bar / 2;
+  for (const sz of [-1, 1]) {
+    g.add(box(bar, topY - bar * 2, bar, steelFrameMat, x, topY / 2, sz * zHalf));
+  }
+  g.add(box(bar, bar, depth - bar * 2, steelFrameMat, x, topY - bar / 2, 0));
+  g.add(box(bar, bar, depth - bar * 2, steelFrameMat, x, bar / 2, 0));
+  return g;
+}
 
 /** Учнівський комп'ютерний стіл із клавіатурою, мишею та системним блоком. */
 export function buildStudentDesk(): THREE.Group {
@@ -37,11 +54,11 @@ export function buildStudentDesk(): THREE.Group {
   const h = 0.758;
   // стільниця
   g.add(box(w, 0.03, d, laminateMat, 0, h - 0.015, 0));
-  // бічні панелі
-  g.add(box(0.025, h - 0.03, d - 0.04, laminateMat, -w / 2 + 0.0125, (h - 0.03) / 2, 0));
-  g.add(box(0.025, h - 0.03, d - 0.04, laminateMat, w / 2 - 0.0125, (h - 0.03) / 2, 0));
-  // задня царга
-  g.add(box(w - 0.05, 0.32, 0.018, laminateMat, 0, h - 0.2, -d / 2 + 0.02));
+  // бічні О-подібні рами з чорної труби
+  g.add(sideLoopLeg(-w / 2 + 0.04, h - 0.03, d - 0.06));
+  g.add(sideLoopLeg(w / 2 - 0.04, h - 0.03, d - 0.06));
+  // задня поперечина між рамами
+  g.add(box(w - 0.12, 0.05, 0.025, steelFrameMat, 0, h - 0.16, -d / 2 + 0.05));
   // клавіатура (ближче до фронту, фронт = +z)
   const kb = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.014, 0.13), [
     blackPlasticMat, blackPlasticMat, keyboardTopMat, blackPlasticMat, blackPlasticMat, blackPlasticMat,
@@ -100,14 +117,14 @@ export function buildMonitor(): THREE.Group {
 export function buildOfficeChair(seatColor?: number): THREE.Group {
   const g = new THREE.Group();
   const cushion = seatColor !== undefined ? standardMat(seatColor, 0.95) : fabricMat;
-  // хрестовина: 5 променів + колеса
+  // хрестовина: 5 хромованих променів + колеса
   for (let i = 0; i < 5; i++) {
     const a = (i / 5) * Math.PI * 2;
-    const arm = box(0.26, 0.03, 0.045, blackPlasticMat, 0, 0, 0);
+    const arm = box(0.26, 0.03, 0.045, chromeMat, 0, 0, 0);
     arm.position.set(Math.cos(a) * 0.13, 0.045, Math.sin(a) * 0.13);
     arm.rotation.y = -a;
     g.add(arm);
-    const caster = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), blackPlasticMat);
+    const caster = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), grayPlasticMat);
     caster.position.set(Math.cos(a) * 0.25, 0.03, Math.sin(a) * 0.25);
     g.add(caster);
   }
@@ -130,6 +147,31 @@ export function buildOfficeChair(seatColor?: number): THREE.Group {
     pad.position.set(s * 0.22, 0.62, 0.02);
     g.add(pad);
   }
+  return g;
+}
+
+/**
+ * Груповий стіл для центру кабінету: стільниця зі світлого дуба на чорній
+ * О-подібній рамі (як у референсі) + зошити на стільниці.
+ */
+export function buildGroupTable(): THREE.Group {
+  const g = new THREE.Group();
+  const w = 1.5;
+  const d = 0.68;
+  const h = 0.76;
+  g.add(box(w, 0.035, d, laminateMat, 0, h - 0.0175, 0));
+  g.add(sideLoopLeg(-w / 2 + 0.07, h - 0.035, d - 0.08, 0.05));
+  g.add(sideLoopLeg(w / 2 - 0.07, h - 0.035, d - 0.08, 0.05));
+  // поздовжня балка між рамами
+  g.add(box(w - 0.24, 0.05, 0.05, steelFrameMat, 0, h - 0.09, 0));
+  // зошити (закриті, графітові — як у референсі)
+  const notebookMat = standardMat(0x4d4f52, 0.85);
+  const nb1 = box(0.25, 0.018, 0.18, notebookMat, -0.35, h + 0.009, 0.05);
+  nb1.rotation.y = 0.14;
+  g.add(nb1);
+  const nb2 = box(0.25, 0.018, 0.18, notebookMat, 0.38, h + 0.009, -0.08);
+  nb2.rotation.y = -0.1;
+  g.add(nb2);
   return g;
 }
 

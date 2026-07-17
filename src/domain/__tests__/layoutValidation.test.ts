@@ -14,6 +14,8 @@ import {
   EAST_WINDOWS,
   FRONT_CABINET,
   FRONT_CHAIR,
+  GROUP_CHAIRS,
+  GROUP_TABLES,
   INTERACTIVE_PANEL,
   MONITORS,
   NETWORK_SWITCH,
@@ -90,6 +92,7 @@ const named = <T,>(label: string, value: T) => ({ label, value });
 /** Меблі, що стоять на підлозі (без крісел — їх засувають під столи). */
 const FLOOR_FURNITURE = [
   ...STUDENT_DESKS.map((d, i) => named(`стіл учня #${i + 1}`, d)),
+  ...GROUP_TABLES.map((t, i) => named(`груповий стіл #${i + 1}`, t)),
   named('стіл учителя', TEACHER_DESK),
   named('вітрина', DISPLAY_CABINET),
   named('тумба біля дошки', FRONT_CABINET),
@@ -101,6 +104,7 @@ const FLOOR_FURNITURE = [
 
 const ALL_CHAIRS = [
   ...STUDENT_CHAIRS.map((c, i) => named(`крісло учня #${i + 1}`, c)),
+  ...GROUP_CHAIRS.map((c, i) => named(`крісло групового стола #${i + 1}`, c)),
   named('крісло вчителя', TEACHER_CHAIR),
   named('крісло біля дошки', FRONT_CHAIR),
 ];
@@ -115,6 +119,11 @@ describe('кількість об’єктів за планом', () => {
   it('вікна: 2 в основній зоні + 1 у ніші', () => {
     expect(EAST_WINDOWS).toHaveLength(2);
     expect(ALCOVE_WINDOWS).toHaveLength(1);
+  });
+
+  it('4 групові столи в центрі, по 4 стільці на кожен', () => {
+    expect(GROUP_TABLES).toHaveLength(4);
+    expect(GROUP_CHAIRS).toHaveLength(16);
   });
 });
 
@@ -160,6 +169,14 @@ describe('відсутність перетинів', () => {
           obbOverlap(ALL_CHAIRS[i].value, ALL_CHAIRS[j].value),
           `${ALL_CHAIRS[i].label} перетинається з ${ALL_CHAIRS[j].label}`,
         ).toBe(false);
+      }
+    }
+  });
+
+  it('стільці групових столів не заїжджають під стільниці сусідніх столів', () => {
+    for (const t of GROUP_TABLES.map((v, i) => named(`груповий стіл #${i + 1}`, v))) {
+      for (const c of ALL_CHAIRS) {
+        expect(obbOverlap(t.value, c.value), `${t.label} перетинається з: ${c.label}`).toBe(false);
       }
     }
   });
