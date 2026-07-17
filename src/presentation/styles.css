@@ -190,6 +190,15 @@ body {
   margin-right: 4px;
 }
 
+.help-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11px;
+  color: #7c8bab;
+  text-align: center;
+}
+
 .toast {
   position: absolute;
   bottom: calc(84px + env(safe-area-inset-bottom));
@@ -206,6 +215,73 @@ body {
 @keyframes fadeout {
   0%, 70% { opacity: 1; }
   100% { opacity: 0; }
+}
+
+.loader {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: #0d1524;
+  transition: opacity 0.4s ease, visibility 0s 0.4s;
+}
+
+.loader--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-orbit {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  animation: loader-spin 2.4s linear infinite;
+}
+
+.loader-circle {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.loader-circle.stem-s { background: #ff7a3d; transform: rotate(0deg) translate(41px) rotate(0deg); }
+.loader-circle.stem-t { background: #ffce45; transform: rotate(90deg) translate(41px) rotate(-90deg); }
+.loader-circle.stem-e { background: #ff4f9c; transform: rotate(180deg) translate(41px) rotate(-180deg); }
+.loader-circle.stem-m { background: #2a6df5; transform: rotate(270deg) translate(41px) rotate(-270deg); }
+
+.loader-label {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  animation: loader-spin-reverse 2.4s linear infinite;
+}
+
+.loader-text {
+  color: #9fb2cc;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loader-spin-reverse {
+  to { transform: rotate(-360deg); }
 }
 
 /* Сенсорні пристрої: цілі дотику ≥ 44px (Apple HIG) */
@@ -295,6 +371,11 @@ body {
   }
 
   .btn.recording {
+    animation: none;
+  }
+
+  .loader-orbit,
+  .loader-label {
     animation: none;
   }
 }

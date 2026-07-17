@@ -6,19 +6,44 @@
 
 ## Поточний стан (2026-07-17)
 
-- [PR #1](https://github.com/felkost/stem_plan_room/pull/1) (інтер'єр + мобільна
-  адаптація) **змержено squash-ом у `main`** (`6ed1e22`). Handoff-доки та скіл
-  engineering-insights доїхали окремим PR із гілки `docs/handoff-insights`
-  (cherry-pick із `feat/interior_design`, бо PR #1 закрився раніше за їх пуш).
-- Гілка `feat/interior_design` більше не потрібна — можна видалити.
-- Тести: 113 passed (домен: розташування/колізії/еталон; infra: чисті функції
-  формату запису та профілю пристрою). `tsc --noEmit` і `npm run build` чисті.
-- Можливі наступні кроки: перевірка на реальному iPhone
-  (`npm run dev -- --host`); PWA-маніфест/іконки, якщо потрібен повний
-  повноекранний режим із домашнього екрана.
+- У `main` змержено: PR #1 (інтер'єр + мобільна адаптація, squash `6ed1e22`)
+  та PR #2 (handoff-доки + скіл engineering-insights, squash `26404f5`).
+- **Активна гілка `feat/migration`**: виконано міграцію **React 18 → 19**
+  (react/react-dom 19.2, @types/react(-dom) 19.x, @vitejs/plugin-react 5.x).
+  Єдина код-правка — іменований `import type { ReactNode }` у Toolbar.tsx
+  (у типах 19 немає глобального `React`-неймспейсу). React Compiler,
+  OffscreenCanvas/Worker і WebGPU **свідомо відхилено** — обґрунтування в
+  insights.md (presentation/infrastructure, Decision-записи від 2026-07-17).
+- Той самий PR доповнено UI-полірою: новий `src/presentation/Loader.tsx`
+  (орбітальний лоадер S/T/E/M, показується під час синхронного
+  `renderer.mount()`, ховається через `onReady`-колбек із SceneCanvas);
+  прибрано речення-акцент із title-card; футер «@Feliks Kostukevych + рік»
+  у панелі довідки; посилання на живий деплой у README.
+- Тести: 113 passed. `tsc --noEmit`, `npm run build` (vite 6.4.3) і браузерна
+  перевірка сцени (WebGL2, канали React→рендерер) — чисті.
+- **Увага:** у робочому дереві були передіснуючі (не мої) зміни `README.md` та
+  видалення `railway.json` — у коміт міграції НЕ включені.
+- Можливі наступні кроки (поза scope цього етапу): `webglcontextlost`-відновлення
+  + пауза циклу при `document.hidden`; адаптивна якість за виміряним frame time;
+  Vite 6→7; перевірка на реальному iPhone (`npm run dev -- --host`).
 
 ## Журнал етапів
 
+- **2026-07-17 — UI-поліра: лоадер сцени, довідка, README (гілка feat/migration)**
+  `51c5cf0`. `Loader.tsx` — 4 кола S/T/E/M по орбіті (контр-обертання тримає
+  літери прямими), fade через клас `.loader--hidden`; `SceneCanvas` отримав
+  `onReady`. Прибрано речення-акцент із заголовка; футер довідки; посилання
+  на `https://stem-plan-room.onrender.com/` у README. Quirk: у прихованій
+  вкладці панелі превʼю CSS-transition теж заморожується (як і rAF) —
+  перевіряти через `classList`/`getBoundingClientRect`, не `getComputedStyle`
+  анімованої властивості (infrastructure/insights.md).
+- **2026-07-17 — Міграція React 18 → 19 (гілка feat/migration)**
+  Оцінено 4 кандидати з дослідження 2026: мігровано лише React (18.3→19.2,
+  типи 19.x, plugin-react 5.x); React Compiler / OffscreenCanvas+Worker / WebGPU
+  відхилено з обґрунтуванням (Decision-записи в insights.md шарів presentation
+  та infrastructure). Передумова дослідження «спочатку відокремити WebGL від
+  React» уже була виконана (render-loop у ThreeSceneRenderer, порт
+  ISceneRenderer). Код-правка одна: `import type { ReactNode }` у Toolbar.tsx.
 - **2026-07-17 — Handoff-механізм + скіл engineering-insights**
   Кореневий CLAUDE.md + memory.md + шарові CLAUDE.md (`1e97ced`); скіл
   `engineering-insights` скопійовано з dev-digest і адаптовано під
@@ -80,4 +105,4 @@
   shrink-допуски SAT і політика еталона — `src/domain/CLAUDE.md`.
 
 ---
-Останнє оновлення: 2026-07-17
+Останнє оновлення: 2026-07-17 (міграція React 19)

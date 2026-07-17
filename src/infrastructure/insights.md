@@ -7,18 +7,21 @@
 
 ## Patterns
 - **2026-07-17 [Pattern]** — Кадр сцени можна зняти без видимої вкладки: у консолі сторінки `import('/src/infrastructure/three/ThreeSceneRenderer.ts')` (Vite dev-сервер віддає TS-модулі як ESM), `mount()` у div з явним розміром у style, `captureFrame()` → base64 → POST на локальний node-приймач; наприкінці `dispose()` і прибрати div. `src/infrastructure/three/ThreeSceneRenderer.ts:186`
+  - **Дод. 2026-07-17:** для ВЕРИФІКАЦІЇ (коли рендерер уже змонтований застосунком) `computer screenshot` панелі падає по таймауту (`document.hidden` заморожує rAF), але сцена рендериться. Доказ непорожнього кадру без скріншота: у консолі `await window.__app.renderer.captureFrame()` (синхронний рендер) → `createImageBitmap` → намалювати в `OffscreenCanvas` → перевірити середню яскравість і к-сть різних кольорів `getImageData`. Так підтверджено, що міграція React 19 не «збілила» сцену (яскравість 206, 90 кольорів).
 
 ## Mistakes
 <!-- Failure modes, antipatterns, wrong assumptions. Prioritize this section. -->
 
 ## Decisions
 <!-- Architectural or design choices with the reasoning behind them. -->
+- **2026-07-17 [Decision]** — OffscreenCanvas+Worker і WebGPU-бекенд відхилено (оцінка 2026 разом із міграцією React 19): капчер-пайплайн зав'язаний на DOM-canvas (`toDataURL` для скріншота, `captureStream(fps)` для MediaRecorder), OrbitControls слухає DOM-події канваса — перенесення рендерингу в Worker зламало б їх і прийом зйомки кадру з прихованої вкладки (див. Pattern вище). WebGL2 достатньо для однієї кімнати. Точка майбутньої заміни бекенда (WebGPU/static fallback) — порт `ISceneRenderer` (application/ports): заміна локалізується в infrastructure без дотику до application/presentation. `src/infrastructure/three/ThreeSceneRenderer.ts`
 
 ## Quirks
 - **2026-07-17 [Quirk]** — Прихована вкладка (`document.hidden === true`) заморожує rAF і колбеки ResizeObserver: цикл `setAnimationLoop` не рендерить, canvas лишається 0×0 або зі застарілим розміром, а скріншот вбудованої панелі браузера падає по таймауту. `captureFrame()` при цьому працює, бо викликає `renderer.render()` синхронно, без rAF. `src/infrastructure/three/ThreeSceneRenderer.ts:100`
+  - **Дод. 2026-07-17:** та сама заморозка стосується й CSS-transition (не лише rAF/ResizeObserver): клас `.loader--hidden` (opacity/visibility-fade у `presentation/Loader.tsx`) коректно застосовується React-стейтом (`pointerEvents` одразу `none`), але `getComputedStyle(...).opacity` лишається `1` і не доходить до `0`, поки вкладка прихована — це не баг компонента. Перевіряти fade-переходи так само, як WebGL-кадр: через `classList`/geometry (`getBoundingClientRect`), а не через `getComputedStyle` анімованої властивості чи скріншот.
 
 ## Open Questions
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 2
+Last updated: 2026-07-17 · Entries: 5
