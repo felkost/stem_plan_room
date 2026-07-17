@@ -9,9 +9,13 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { ISceneRenderer } from '../../application/ports';
 import type { CameraPreset, QualityLevel } from '../../domain/entities';
 import { CAMERA_PRESETS } from '../../domain/classroomLayout';
+import { framedFov } from './cameraFraming';
 import { assembleClassroom, type AssembledScene } from './sceneAssembler';
 
 const TWEEN_DURATION = 1.1; // с
+/** Базовий вертикальний FOV (для landscape/desktop); на вузьких екранах
+ *  ефективний FOV розширюється через framedFov() — див. cameraFraming.ts. */
+const BASE_FOV = 55;
 
 export class ThreeSceneRenderer implements ISceneRenderer {
   private renderer: THREE.WebGLRenderer | null = null;
@@ -60,7 +64,8 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     scene.environmentIntensity = 0.3;
     this.scene = scene;
 
-    const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 100);
+    const aspect0 = container.clientWidth / container.clientHeight;
+    const camera = new THREE.PerspectiveCamera(framedFov(BASE_FOV, aspect0), aspect0, 0.1, 100);
     this.camera = camera;
 
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -122,6 +127,7 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     const current = this.renderer.getSize(new THREE.Vector2());
     if (current.x === w && current.y === h) return;
     this.camera.aspect = w / h;
+    this.camera.fov = framedFov(BASE_FOV, this.camera.aspect);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
   }

@@ -15,6 +15,7 @@
 
 ## Decisions
 <!-- Architectural or design choices with the reasoning behind them. -->
+- **2026-07-17 [Decision]** — Для «підлога+стіни+стеля видно одночасно» на вузьких (портретних) екранах обрано розширення vFOV (`cameraFraming.ts: framedFov`), а НЕ відкат дистанції камери від цілі. Перша спроба (масштабувати вектор position−target від ORBIT-цілі) для тісного кутового кадру overview-пресета виштовхнула камеру за межі кімнати крізь стіну (позиція опинилась за periметром `ROOM`, поруч із інтерактивною панеллю впритул до об'єктива — велика чорна пляма в кадрі). vFOV-компенсація (кламп `MAX_FOV=78°`) не рухає камеру в просторі взагалі, тож геометрично безпечна для будь-якого пресета незалежно від того, наскільки він близько до кута/стіни; three.js `PerspectiveCamera.fov` — вертикальний кут, тому розширення додатково показує ще більше стелі/підлоги, а не лише ширину. `src/infrastructure/three/cameraFraming.ts`
 - **2026-07-17 [Decision]** — OffscreenCanvas+Worker і WebGPU-бекенд відхилено (оцінка 2026 разом із міграцією React 19): капчер-пайплайн зав'язаний на DOM-canvas (`toDataURL` для скріншота, `captureStream(fps)` для MediaRecorder), OrbitControls слухає DOM-події канваса — перенесення рендерингу в Worker зламало б їх і прийом зйомки кадру з прихованої вкладки (див. Pattern вище). WebGL2 достатньо для однієї кімнати. Точка майбутньої заміни бекенда (WebGPU/static fallback) — порт `ISceneRenderer` (application/ports): заміна локалізується в infrastructure без дотику до application/presentation. `src/infrastructure/three/ThreeSceneRenderer.ts`
 
 ## Quirks
@@ -25,4 +26,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 5
+Last updated: 2026-07-17 · Entries: 6
