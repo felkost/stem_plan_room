@@ -122,6 +122,36 @@ export const FRONT_CHAIR: PlacedItem = {
 };
 
 /**
+ * Групові столи в центрі кабінету (нові, поза sh3d-планом): дві колони
+ * по два столи вздовж осі y, стільці обабіч довгих сторін. Центральна зона
+ * вільна від об'єктів плану, тож столи не торкаються базового розташування.
+ */
+export const GROUP_TABLE_SIZE = { width: 150, depth: 68, height: 76 };
+
+export const GROUP_TABLES: PlacedItem[] = [
+  // Західна колона
+  { x: 180, y: -10, angle: Math.PI / 2, ...GROUP_TABLE_SIZE },
+  { x: 180, y: 145, angle: Math.PI / 2, ...GROUP_TABLE_SIZE },
+  // Східна колона
+  { x: 330, y: -10, angle: Math.PI / 2, ...GROUP_TABLE_SIZE },
+  { x: 330, y: 145, angle: Math.PI / 2, ...GROUP_TABLE_SIZE },
+];
+
+/** Стільці групових столів: по 2 з кожної довгої сторони кожного стола. */
+export const GROUP_CHAIRS: PlacedItem[] = (() => {
+  const rows = [-47, 27, 108, 182]; // y-позиції сидінь уздовж колони
+  const chairs: PlacedItem[] = [];
+  for (const cx of [180, 330]) {
+    for (const y of rows) {
+      // західний бік — обличчям на схід (до стола), східний — на захід
+      chairs.push({ x: cx - 52, y, angle: (3 * Math.PI) / 2, ...CHAIR_SIZE });
+      chairs.push({ x: cx + 52, y, angle: Math.PI / 2, ...CHAIR_SIZE });
+    }
+  }
+  return chairs;
+})();
+
+/**
  * Тренувальний стіл для роботів («Стол» із плану, мітка «Тренувальне поле
  * для роботів»): біле поле з бортиками, на якому їздить робот NXT.
  */

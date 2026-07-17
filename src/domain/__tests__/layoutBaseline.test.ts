@@ -35,6 +35,13 @@ describe('базове розташування об’єктів (еталон 
     }).toMatchSnapshot();
   });
 
+  it('групові столи в центрі кабінету (додано поза sh3d-планом)', () => {
+    expect({
+      groupTables: layout.GROUP_TABLES,
+      groupChairs: layout.GROUP_CHAIRS,
+    }).toMatchSnapshot();
+  });
+
   it('техніка, тренувальний стіл, отвори, світло, камери', () => {
     expect({
       trainingTable: layout.TRAINING_TABLE,

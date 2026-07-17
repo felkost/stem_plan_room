@@ -1,30 +1,37 @@
 /**
  * Реалізація порту IVideoRecorder на MediaRecorder API.
- * Записує canvas-потік у WebM (VP9 → VP8 → за замовчуванням).
+ * Формат обирається за можливостями браузера: WebM (VP9 → VP8) або MP4
+ * для Safari на iOS — див. recorderFormats.ts.
  */
 import type { IVideoRecorder } from '../../application/ports';
-
-const MIME_CANDIDATES = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+import { pickRecorderFormat, type RecorderFormat } from './recorderFormats';
 
 export class MediaRecorderVideoService implements IVideoRecorder {
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
-  private mimeType = '';
+  private format: RecorderFormat | null = null;
+
+  private get supportedFormat(): RecorderFormat | null {
+    if (typeof MediaRecorder === 'undefined') return null;
+    return pickRecorderFormat((m) => MediaRecorder.isTypeSupported(m));
+  }
 
   get isSupported(): boolean {
-    return typeof MediaRecorder !== 'undefined' && MIME_CANDIDATES.some((m) => MediaRecorder.isTypeSupported(m));
+    return this.supportedFormat !== null;
   }
 
   get fileExtension(): string {
-    return 'webm';
+    // під час запису — формат, з яким його розпочато
+    return (this.format ?? this.supportedFormat)?.extension ?? 'webm';
   }
 
   start(stream: MediaStream): void {
     if (this.recorder) throw new Error('Запис уже триває');
-    this.mimeType = MIME_CANDIDATES.find((m) => MediaRecorder.isTypeSupported(m)) ?? '';
+    this.format = this.supportedFormat;
+    if (!this.format) throw new Error('Браузер не підтримує запис відео');
     this.chunks = [];
     this.recorder = new MediaRecorder(stream, {
-      mimeType: this.mimeType || undefined,
+      mimeType: this.format.mimeType,
       videoBitsPerSecond: 8_000_000,
     });
     this.recorder.ondataavailable = (e) => {
@@ -36,12 +43,13 @@ export class MediaRecorderVideoService implements IVideoRecorder {
   stop(): Promise<Blob> {
     return new Promise((resolve, reject) => {
       const recorder = this.recorder;
-      if (!recorder) {
+      const format = this.format;
+      if (!recorder || !format) {
         reject(new Error('Запис не розпочато'));
         return;
       }
       recorder.onstop = () => {
-        const blob = new Blob(this.chunks, { type: this.mimeType || 'video/webm' });
+        const blob = new Blob(this.chunks, { type: format.mimeType });
         this.chunks = [];
         this.recorder = null;
         // зупинити треки потоку

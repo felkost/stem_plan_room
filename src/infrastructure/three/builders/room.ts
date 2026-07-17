@@ -23,10 +23,17 @@ export interface RoomBuild {
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number; height: number };
 }
 
-const wallMat = standardMat(0xf1ede4, 0.95);
-const frontWallMat = standardMat(0xdde7ee, 0.95);
+const wallMat = standardMat(0xf4f3f0, 0.95);
+const frontWallMat = standardMat(0xf4f3f0, 0.95);
 const ceilingMat = standardMat(0xf7f7f5, 0.9);
 const frameMat = standardMat(0xfafafa, 0.5);
+const blindMat = new THREE.MeshStandardMaterial({
+  color: 0xf3f1ec,
+  roughness: 0.9,
+  transparent: true,
+  opacity: 0.92,
+  side: THREE.DoubleSide,
+});
 const glassMat = new THREE.MeshPhysicalMaterial({
   color: 0xcfe4f5,
   roughness: 0.06,
@@ -37,7 +44,7 @@ const glassMat = new THREE.MeshPhysicalMaterial({
 });
 const sillMat = standardMat(0xffffff, 0.6);
 const radiatorMat = standardMat(0xe9e9e6, 0.55, 0.15);
-const baseboardMat = standardMat(0x8a6a4b, 0.7);
+const baseboardMat = standardMat(0x93938f, 0.7);
 const doorMat = new THREE.MeshStandardMaterial({ map: makeWoodTexture('#8a5a2e'), roughness: 0.65 });
 const handleMat = standardMat(0xc9c9c9, 0.3, 0.9);
 
@@ -114,6 +121,29 @@ function windowAssembly(opening: { center: number; width: number; sill: number; 
   }
   rad.position.set(x, 0.32, thickness / 2 + 0.09);
   g.add(rad);
+  // вертикальні тканинні жалюзі: карниз + ламелі, привідкриті до кімнати
+  const railY = opening.sill + h + 0.08;
+  g.add(box(w + 0.16, 0.05, 0.09, sillMat, x, railY, thickness / 2 + 0.13));
+  const slatW = 0.089;
+  const slatTop = railY - 0.035;
+  const slatBottom = 0.62;
+  const span = w + 0.1;
+  const count = Math.floor(span / (slatW + 0.006));
+  for (let i = 0; i < count; i++) {
+    const slat = new THREE.Mesh(
+      new THREE.PlaneGeometry(slatW, slatTop - slatBottom),
+      blindMat,
+    );
+    slat.position.set(
+      x - span / 2 + slatW / 2 + i * (slatW + 0.006),
+      (slatTop + slatBottom) / 2,
+      thickness / 2 + 0.13,
+    );
+    // ламелі повернуто «привідкрито» — світло з вікон проходить у клас
+    slat.rotation.y = 0.55 + (i % 2 === 0 ? 0.05 : -0.05);
+    slat.userData.noShadowCast = true;
+    g.add(slat);
+  }
   return g;
 }
 
@@ -204,7 +234,7 @@ export function buildRoom(): RoomBuild {
   floorTex.repeat.set(0.8, 0.8);
   const floor = new THREE.Mesh(
     new THREE.ShapeGeometry(roomShape(true)),
-    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.55 }),
+    new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.35 }),
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
@@ -249,6 +279,13 @@ export function buildRoom(): RoomBuild {
   door.rotation.y = Math.PI / 2; // фронт → +x (усередину кімнати)
   door.position.set(minX - 0.02, 0, cm(WEST_DOOR.center));
   west.add(door);
+  // група з трьох постерів (як у референсі) — на південь від дверей
+  for (let i = 0; i < 3; i++) {
+    const p = poster(i);
+    p.rotation.y = Math.PI / 2;
+    p.position.set(minX + 0.01, 1.62, -0.55 + i * 0.7);
+    west.add(p);
+  }
   group.add(west);
 
   // Північна стіна (фронт класу: акцентний колір; охоплює основну зону та нішу)
@@ -281,6 +318,11 @@ export function buildRoom(): RoomBuild {
   posterE.rotation.y = -Math.PI / 2;
   posterE.position.set(maxX - 0.01, 1.55, 2.6);
   eastMain.add(posterE);
+  // постер біля фронту класу (до першого вікна)
+  const posterEF = poster(3);
+  posterEF.rotation.y = -Math.PI / 2;
+  posterEF.position.set(maxX - 0.01, 1.62, -0.05);
+  eastMain.add(posterEF);
   group.add(eastMain);
 
   // Східна стіна ніші (1 вікно)
@@ -297,6 +339,11 @@ export function buildRoom(): RoomBuild {
   eastAlcoveWall.rotation.y = -Math.PI / 2;
   eastAlcoveWall.position.set(aMaxX + t / 2, 0, (minZ + aMaxZ) / 2);
   eastAlcove.add(eastAlcoveWall);
+  // постер у ніші вчителя (між вікном і виходом в основну зону)
+  const posterA = poster(2);
+  posterA.rotation.y = -Math.PI / 2;
+  posterA.position.set(aMaxX - 0.01, 1.62, -0.72);
+  eastAlcove.add(posterA);
   group.add(eastAlcove);
 
   // Південна стіна основної зони (глуха, з постерами): інтер'єр -z ⇒ rotation.y=180°

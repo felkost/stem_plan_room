@@ -29,9 +29,13 @@ export interface IVideoRecorder {
   start(stream: MediaStream): void;
   /** Зупинити запис і повернути готовий файл. */
   stop(): Promise<Blob>;
-  /** Розширення файлу для поточного кодека (webm). */
+  /** Розширення файлу для поточного кодека (webm/mp4). */
   readonly fileExtension: string;
 }
 
-/** Порт збереження файлу на машину користувача. */
-export type FileSaver = (blob: Blob, fileName: string) => void;
+/**
+ * Порт збереження файлу на пристрій користувача.
+ * Повертає true, якщо файл збережено/передано, і false, якщо користувач
+ * скасував збереження (наприклад, закрив системне меню «Поділитися»).
+ */
+export type FileSaver = (blob: Blob, fileName: string) => Promise<boolean>;
