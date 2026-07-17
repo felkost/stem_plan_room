@@ -23,7 +23,8 @@ interface Props {
 
 export function App({ renderer, viewer, media, initialQuality, isTouch, onSceneReady }: Props) {
   const [activePreset, setActivePreset] = useState('overview');
-  const [autoRotate, setAutoRotateState] = useState(true);
+  // автообертання вимкнене за замовчуванням (синхронно з ThreeSceneRenderer)
+  const [autoRotate, setAutoRotateState] = useState(false);
   const [quality, setQualityState] = useState<QualityLevel>(initialQuality);
   const [helpOpen, setHelpOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);

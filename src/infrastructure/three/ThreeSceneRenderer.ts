@@ -65,11 +65,15 @@ export class ThreeSceneRenderer implements ISceneRenderer {
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
+    // вищий dampingFactor — коротший «вибіг» після відпускання миші
+    // (менше значення = довша інерція); 0.2 дає плавність без «ковзання»
+    controls.dampingFactor = 0.2;
+    controls.rotateSpeed = 0.85;
     controls.maxPolarAngle = Math.PI / 2 + 0.35;
     controls.minDistance = 0.8;
     controls.maxDistance = 18;
-    controls.autoRotate = true;
+    // автообертання вимкнене за замовчуванням; вмикається кнопкою «Обертання»
+    controls.autoRotate = false;
     controls.autoRotateSpeed = 0.7;
     // Керування мишею: ЛКМ — обертання, коліщатко — масштаб (до курсора), ПКМ — зсув
     controls.enableRotate = true;
