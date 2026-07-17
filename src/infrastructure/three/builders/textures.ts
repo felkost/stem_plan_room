@@ -693,6 +693,115 @@ export function makePinBoardTexture(): THREE.CanvasTexture {
   return toTexture(canvas);
 }
 
+/**
+ * Однолінійний робот для техно-декору західної стіни (за референсом
+ * line-art-космонавта): графітовий контур однією «безперервною» лінією —
+ * округла голова з антеною, тулуб, руки, колеса-ролики. Прозоре тло,
+ * детерміновано (без рандому).
+ */
+export function makeRobotLineArtTexture(): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(560, 532);
+  ctx.strokeStyle = '#2b3440';
+  ctx.lineWidth = 7;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  // антена з кулькою
+  ctx.beginPath();
+  ctx.arc(280, 28, 10, 0, Math.PI * 2);
+  ctx.moveTo(280, 38);
+  ctx.lineTo(280, 74);
+  ctx.stroke();
+  // голова — округлий прямокутник з «вухами»
+  ctx.beginPath();
+  ctx.roundRect(190, 74, 180, 120, 34);
+  ctx.stroke();
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.roundRect(280 + s * 104 - 10, 108, 20, 52, 8);
+    ctx.stroke();
+  }
+  // очі та усмішка (продовження «лінії»)
+  ctx.beginPath();
+  ctx.arc(243, 128, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(317, 128, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(280, 152, 26, 0.25 * Math.PI, 0.75 * Math.PI);
+  ctx.stroke();
+  // шия та тулуб
+  ctx.beginPath();
+  ctx.moveTo(280, 194);
+  ctx.lineTo(280, 214);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(196, 214, 168, 150, 26);
+  ctx.stroke();
+  // панель на грудях: дві кнопки й «дисплей»
+  ctx.beginPath();
+  ctx.roundRect(232, 244, 96, 56, 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(258, 330, 9, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(302, 330, 9, 0, Math.PI * 2);
+  ctx.stroke();
+  // руки: ліва зігнута вгору (вітається), права вниз із клешнею
+  ctx.beginPath();
+  ctx.moveTo(196, 240);
+  ctx.quadraticCurveTo(140, 250, 122, 206);
+  ctx.quadraticCurveTo(112, 182, 126, 162);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(134, 148, 16, 0.2 * Math.PI, 1.6 * Math.PI);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(364, 240);
+  ctx.quadraticCurveTo(420, 258, 432, 310);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(438, 328, 16, 1.2 * Math.PI, 0.6 * Math.PI);
+  ctx.stroke();
+  // «спідниця»-шасі та колеса-ролики (їде по неону, як референс на роликах)
+  ctx.beginPath();
+  ctx.moveTo(214, 364);
+  ctx.lineTo(202, 420);
+  ctx.lineTo(358, 420);
+  ctx.lineTo(346, 364);
+  ctx.stroke();
+  for (const wx of [238, 322]) {
+    ctx.beginPath();
+    ctx.arc(wx, 458, 30, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(wx, 458, 8, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  return toTexture(canvas);
+}
+
+/**
+ * Безшовний горизонтальний градієнт неонової стрічки: рожевий → фіолетовий →
+ * бірюзовий → синій → знову рожевий (замкнений цикл — нескінченне
+ * «протікання» кольору через texture.offset.x). RepeatWrapping по U.
+ */
+export function makeNeonGradientTexture(): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(256, 4);
+  const grad = ctx.createLinearGradient(0, 0, 256, 0);
+  grad.addColorStop(0, '#ff4fd8');
+  grad.addColorStop(0.28, '#a45cff');
+  grad.addColorStop(0.55, '#37d0ff');
+  grad.addColorStop(0.8, '#2a6df5');
+  grad.addColorStop(1, '#ff4fd8');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 4);
+  const tex = toTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  return tex;
+}
+
 /** Циферблат настінного годинника. */
 export function makeClockTexture(): THREE.CanvasTexture {
   const [canvas, ctx] = makeCanvas(128, 128);

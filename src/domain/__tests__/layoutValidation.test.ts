@@ -22,6 +22,7 @@ import {
   POD_CHAIRS,
   POD_DESKS,
   POWER_STATION,
+  ROBOT_LINE_DECAL,
   ROOM,
   STUDENT_CHAIRS,
   STUDENT_DESKS,
@@ -32,6 +33,7 @@ import {
   WALL_CLOCK,
   WALL_DECOR,
   WEST_DOOR,
+  WEST_NEON_SPAN,
 } from '../classroomLayout';
 import type { PlacedItem, RectBounds } from '../entities';
 
@@ -142,6 +144,7 @@ describe('усі об’єкти в межах Г-подібної кімнат�
     named('стенд для матеріалів', PIN_BOARD),
     named('декор-ворд-клауд', WALL_DECOR),
     named('настінний годинник', WALL_CLOCK),
+    named('декор-робот (західна стіна)', ROBOT_LINE_DECAL),
   ];
   // допуск 6 см: настінні предмети (дошка) частково «втоплені» у стіну
   it.each(items)('$label у межах кімнати', ({ value }) => {
@@ -281,6 +284,16 @@ describe('настінні об’єкти редизайну (композиц�
     const goldenX = ROOM.minX + (ROOM.maxX - ROOM.minX) * (1 - 1 / PHI);
     expect(Math.abs(PIN_BOARD.x - (ROOM.minX + goldenX) / 2)).toBeLessThan(1);
     expect(Math.abs(WALL_DECOR.x - (goldenX + ROOM.maxX) / 2)).toBeLessThan(1);
+  });
+
+  it('декор-робот — на золотому перерізі прогону неону західної стіни', () => {
+    const goldenY = WEST_NEON_SPAN.from + (WEST_NEON_SPAN.to - WEST_NEON_SPAN.from) / PHI;
+    expect(Math.abs(ROBOT_LINE_DECAL.y - goldenY)).toBeLessThan(1);
+  });
+
+  it('прогін неону — південніше дверей, не перекриває їх', () => {
+    expect(WEST_NEON_SPAN.from).toBeGreaterThan(WEST_DOOR.center + WEST_DOOR.width / 2);
+    expect(WEST_NEON_SPAN.to).toBeLessThan(ROOM.maxY);
   });
 
   it('стійка комутатора — у кутку південної та західної стін', () => {

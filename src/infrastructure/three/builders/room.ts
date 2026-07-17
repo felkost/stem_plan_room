@@ -11,17 +11,21 @@ import {
   CEILING_LIGHTS,
   EAST_WINDOWS,
   PIN_BOARD,
+  ROBOT_LINE_DECAL,
   ROOM,
   WALL_CLOCK,
   WALL_DECOR,
   WEST_DOOR,
+  WEST_NEON_SPAN,
 } from '../../../domain/classroomLayout';
 import { box, cm, placeItem, standardMat } from './common';
 import {
   makeClockTexture,
   makeFloorTexture,
+  makeNeonGradientTexture,
   makePinBoardTexture,
   makePosterTexture,
+  makeRobotLineArtTexture,
   makeWoodTexture,
   makeWordCloudTexture,
 } from './textures';
@@ -38,6 +42,8 @@ export interface RoomBuild {
   ceiling: THREE.Group;
   /** Загальний обмежувальний бокс кімнати (включно з нішею). */
   bounds: { minX: number; maxX: number; minZ: number; maxZ: number; height: number };
+  /** Анімовані елементи оболонки кімнати (напр., «протікання» неону). */
+  updatables: Array<(dt: number, t: number) => void>;
 }
 
 const wallMat = standardMat(0xf4f3f0, 0.95);
@@ -296,6 +302,56 @@ function wordCloudDecal(): THREE.Group {
   return g;
 }
 
+/** Однолінійний робот (прозорий декаль-план); низ на y=0, фронт у +z. */
+function robotLineDecal(): THREE.Group {
+  const g = new THREE.Group();
+  const w = cm(ROBOT_LINE_DECAL.width);
+  const h = cm(ROBOT_LINE_DECAL.height);
+  const decal = new THREE.Mesh(
+    new THREE.PlaneGeometry(w, h),
+    new THREE.MeshStandardMaterial({ map: makeRobotLineArtTexture(), transparent: true, roughness: 0.95 }),
+  );
+  decal.position.y = h / 2;
+  decal.userData.noShadowCast = true;
+  g.add(decal);
+  return g;
+}
+
+/**
+ * Неонова LED-стрічка-хвиля на площині західної стіни (за референсом):
+ * CatmullRom-крива вздовж прогону WEST_NEON_SPAN із «провалом» під ногами
+ * робота; unlit-матеріал із безшовним градієнтом. Повертає меш та
+ * update-функцію «протікання» кольору (зсув UV — без перерахунку геометрії).
+ */
+function neonStrip(): { mesh: THREE.Mesh; update: (dt: number, t: number) => void } {
+  const x = cm(ROOM.minX) + 0.03;
+  const zFrom = cm(WEST_NEON_SPAN.to); // південний край (початок хвилі)
+  const zTo = cm(WEST_NEON_SPAN.from); // північний край (біля дверей)
+  const zRobot = cm(ROBOT_LINE_DECAL.y);
+  const points: THREE.Vector3[] = [
+    new THREE.Vector3(x, 1.52, zFrom),
+    new THREE.Vector3(x, 1.9, zFrom - 0.55),
+    new THREE.Vector3(x, 1.62, zRobot + 0.55),
+    // «провал» хвилі під колесами робота (робот стоїть на неоні)
+    new THREE.Vector3(x, 1.5, zRobot),
+    new THREE.Vector3(x, 1.68, zRobot - 0.6),
+    new THREE.Vector3(x, 1.94, cm(60)),
+    new THREE.Vector3(x, 1.58, cm(-10)),
+    new THREE.Vector3(x, 1.82, zTo),
+  ];
+  const curve = new THREE.CatmullRomCurve3(points, false, 'catmullrom', 0.5);
+  const tex = makeNeonGradientTexture();
+  const mesh = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 220, 0.016, 8),
+    new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }),
+  );
+  mesh.userData.noShadowCast = true;
+  const update = (_dt: number, t: number) => {
+    tex.offset.x = -t * 0.12;
+  };
+  return { mesh, update };
+}
+
 /**
  * Полігон Г-подібної кімнати у координатах плану (см → м).
  * mirrorZ=true — для підлоги (shape-y = -z після повороту -90° навколо X),
@@ -322,6 +378,7 @@ function roomShape(mirrorZ: boolean): THREE.Shape {
 
 export function buildRoom(): RoomBuild {
   const group = new THREE.Group();
+  const updatables: Array<(dt: number, t: number) => void> = [];
   const minX = cm(ROOM.minX);
   const maxX = cm(ROOM.maxX);
   const minZ = cm(ROOM.minY);
@@ -383,13 +440,14 @@ export function buildRoom(): RoomBuild {
   door.rotation.y = Math.PI / 2; // фронт → +x (усередину кімнати)
   door.position.set(minX - 0.02, 0, cm(WEST_DOOR.center));
   west.add(door);
-  // група з трьох постерів (як у референсі) — на південь від дверей
-  for (let i = 0; i < 3; i++) {
-    const p = poster(i);
-    p.rotation.y = Math.PI / 2;
-    p.position.set(minX + 0.01, 1.62, -0.55 + i * 0.7);
-    west.add(p);
-  }
+  // техно-декор (замість постерів): однолінійний робот на золотому перерізі
+  // прогону неону + анімована неонова LED-хвиля над моніторами колони
+  const robotDecal = robotLineDecal();
+  placeItem(robotDecal, ROBOT_LINE_DECAL);
+  west.add(robotDecal);
+  const neon = neonStrip();
+  west.add(neon.mesh);
+  updatables.push(neon.update);
   group.add(west);
 
   // Північна стіна (фронт класу: акцентний колір; охоплює основну зону та нішу)
@@ -524,5 +582,6 @@ export function buildRoom(): RoomBuild {
     wallSets,
     ceiling,
     bounds: { minX, maxX: aMaxX, minZ, maxZ, height },
+    updatables,
   };
 }

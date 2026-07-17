@@ -56,6 +56,7 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
 
   const room = buildRoom();
   scene.add(room.group);
+  updatables.push(...room.updatables);
   const { sun } = buildLighting(scene);
 
   // Учнівські столи, монітори та крісла — за координатами плану

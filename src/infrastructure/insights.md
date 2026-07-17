@@ -9,6 +9,7 @@
 - **2026-07-17 [Pattern]** — Кадр сцени можна зняти без видимої вкладки: у консолі сторінки `import('/src/infrastructure/three/ThreeSceneRenderer.ts')` (Vite dev-сервер віддає TS-модулі як ESM), `mount()` у div з явним розміром у style, `captureFrame()` → base64 → POST на локальний node-приймач; наприкінці `dispose()` і прибрати div. `src/infrastructure/three/ThreeSceneRenderer.ts:186`
   - **Дод. 2026-07-17:** для ВЕРИФІКАЦІЇ (коли рендерер уже змонтований застосунком) `computer screenshot` панелі падає по таймауту (`document.hidden` заморожує rAF), але сцена рендериться. Доказ непорожнього кадру без скріншота: у консолі `await window.__app.renderer.captureFrame()` (синхронний рендер) → `createImageBitmap` → намалювати в `OffscreenCanvas` → перевірити середню яскравість і к-сть різних кольорів `getImageData`. Так підтверджено, що міграція React 19 не «збілила» сцену (яскравість 206, 90 кольорів).
   - **Дод. 2026-07-17 (2):** при керуванні камерою через консоль із замороженим rAF перед `captureFrame()` треба вручну викликати `controls.update()` і `updateWallVisibility()` (dollhouse-приховування живе лише в animate-циклі; TS-private доступні з рантайму). Інакше кадр знято зі старим станом стін — напр., зовнішня стіна закриє кімнату. Робочий пайплайн повного скріншота: node-приймач на localhost (CORS `*`, POST dataURL) + `fetch` із консолі; якщо канвас 0×0 — примусово `renderer.setSize(1280, 800, false)` + оновити `camera.aspect`. `src/infrastructure/three/ThreeSceneRenderer.ts:148`
+- **2026-07-17 [Pattern]** — «Неонова LED-стрічка» з анімацією протікання кольору: `TubeGeometry` по `CatmullRomCurve3` + `MeshBasicMaterial({ map, toneMapped: false })` (unlit — читається як неон без постпроцесингу/bloom) із БЕЗШОВНИМ горизонтальним градієнтом (перший і останній colorStop однакові, `wrapS = RepeatWrapping`); анімація — лише `texture.offset.x = -t * швидкість` в update-функції (UV TubeGeometry йдуть уздовж труби), нуль перерахунків геометрії чи vertex colors. Анімовані елементи оболонки кімнати повертаються через нове поле `RoomBuild.updatables` і вливаються в загальний цикл у sceneAssembler. Верифікація анімації при замороженому rAF: два ручні виклики `frame()` з паузою → порівняти семпли пікселів на висоті стрічки (стіна лишається незмінною — контроль). `src/infrastructure/three/builders/room.ts` (neonStrip).
 
 ## Mistakes
 <!-- Failure modes, antipatterns, wrong assumptions. Prioritize this section. -->
@@ -27,4 +28,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 7
+Last updated: 2026-07-17 · Entries: 8

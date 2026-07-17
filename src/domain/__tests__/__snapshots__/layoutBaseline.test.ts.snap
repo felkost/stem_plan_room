@@ -1,5 +1,23 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`базове розташування об’єктів (еталон плану) > декор західної стіни (робот + прогін неону) 1`] = `
+{
+  "robotLineDecal": {
+    "angle": 4.71238898038469,
+    "depth": 1,
+    "elevation": 150,
+    "height": 95,
+    "width": 100,
+    "x": -34.4,
+    "y": 220,
+  },
+  "westNeonSpan": {
+    "from": -70,
+    "to": 400,
+  },
+}
+`;
+
 exports[`базове розташування об’єктів (еталон плану) > зона вчителя та фронт класу 1`] = `
 {
   "chalkboard": {

@@ -51,6 +51,13 @@ describe('базове розташування об’єктів (еталон 
     }).toMatchSnapshot();
   });
 
+  it('декор західної стіни (робот + прогін неону)', () => {
+    expect({
+      robotLineDecal: layout.ROBOT_LINE_DECAL,
+      westNeonSpan: layout.WEST_NEON_SPAN,
+    }).toMatchSnapshot();
+  });
+
   it('техніка, тренувальний стіл, отвори, світло, камери', () => {
     expect({
       trainingTable: layout.TRAINING_TABLE,
