@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { QualityLevel } from '../domain/entities';
 import type { ViewerService } from '../application/ViewerService';
 
@@ -9,7 +10,7 @@ interface Props {
   onAutoRotate: (on: boolean) => void;
   quality: QualityLevel;
   onQuality: (q: QualityLevel) => void;
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 /** Панель керування: пресети камери, автообертання, якість + медіа-кнопки. */
