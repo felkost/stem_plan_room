@@ -9,8 +9,95 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>STEM-кабінет інформатики — 3D</title>
+    <style>
+      /* Критичні інлайн-стилі: темний фон без білого спалаху та стартовий
+         лоадер, видимий одразу після парсингу HTML — ще до завантаження
+         JS-бандла. Анімація — лише transform, тож компазитор крутить орбіту
+         навіть коли main thread зайнятий збіркою 3D-сцени. Ховає лоадер
+         composition root (main.tsx) після готовності сцени. */
+      html,
+      body {
+        height: 100%;
+        background: #0d1524;
+      }
+      #boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: #0d1524;
+        font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+        transition: opacity 0.4s ease, visibility 0s 0.4s;
+      }
+      #boot-loader.boot-loader--hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .boot-orbit {
+        position: relative;
+        width: 112px;
+        height: 112px;
+        animation: boot-spin 2.4s linear infinite;
+        will-change: transform;
+      }
+      .boot-circle {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 800;
+        font-size: 16px;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      }
+      /* контр-обертання тримає літери прямими, поки орбіта крутиться */
+      .boot-circle > span {
+        animation: boot-spin-reverse 2.4s linear infinite;
+        will-change: transform;
+      }
+      .boot-s { background: #ff7a3d; transform: rotate(0deg) translate(41px) rotate(0deg); }
+      .boot-t { background: #ffce45; transform: rotate(90deg) translate(41px) rotate(-90deg); }
+      .boot-e { background: #ff4f9c; transform: rotate(180deg) translate(41px) rotate(-180deg); }
+      .boot-m { background: #2a6df5; transform: rotate(270deg) translate(41px) rotate(-270deg); }
+      .boot-text {
+        color: #9fb2cc;
+        font-size: 13px;
+        letter-spacing: 0.3px;
+      }
+      @keyframes boot-spin {
+        to { transform: rotate(360deg); }
+      }
+      @keyframes boot-spin-reverse {
+        to { transform: rotate(-360deg); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-orbit,
+        .boot-circle > span {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-loader" role="status" aria-label="Завантаження сцени">
+      <div class="boot-orbit">
+        <span class="boot-circle boot-s"><span>S</span></span>
+        <span class="boot-circle boot-t"><span>T</span></span>
+        <span class="boot-circle boot-e"><span>E</span></span>
+        <span class="boot-circle boot-m"><span>M</span></span>
+      </div>
+      <p class="boot-text">Завантаження сцени…</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

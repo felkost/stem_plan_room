@@ -151,27 +151,39 @@ export function buildOfficeChair(seatColor?: number): THREE.Group {
 }
 
 /**
- * Груповий стіл для центру кабінету: стільниця зі світлого дуба на чорній
- * О-подібній рамі (як у референсі) + зошити на стільниці.
+ * Клиноподібний («пелюстка») стіл групового острівця: 6 таких столів
+ * утворюють шестикутник навколо спільного центру (форма — за референсом
+ * користувача). Центр групи в (0,0), низ на y=0, фронт (широка зовнішня
+ * кромка, де сидить крісло) — у +z, вузька внутрішня кромка — у −z.
  */
-export function buildGroupTable(): THREE.Group {
+export function buildPodDesk(): THREE.Group {
   const g = new THREE.Group();
-  const w = 1.5;
-  const d = 0.68;
-  const h = 0.76;
-  g.add(box(w, 0.035, d, laminateMat, 0, h - 0.0175, 0));
-  g.add(sideLoopLeg(-w / 2 + 0.07, h - 0.035, d - 0.08, 0.05));
-  g.add(sideLoopLeg(w / 2 - 0.07, h - 0.035, d - 0.08, 0.05));
-  // поздовжня балка між рамами
-  g.add(box(w - 0.24, 0.05, 0.05, steelFrameMat, 0, h - 0.09, 0));
-  // зошити (закриті, графітові — як у референсі)
-  const notebookMat = standardMat(0x4d4f52, 0.85);
-  const nb1 = box(0.25, 0.018, 0.18, notebookMat, -0.35, h + 0.009, 0.05);
-  nb1.rotation.y = 0.14;
-  g.add(nb1);
-  const nb2 = box(0.25, 0.018, 0.18, notebookMat, 0.38, h + 0.009, -0.08);
-  nb2.rotation.y = -0.1;
-  g.add(nb2);
+  const innerW = 0.27;
+  const outerW = 0.5;
+  const radial = 0.35;
+  const h = 0.74;
+  const thick = 0.035;
+  const shape = new THREE.Shape();
+  shape.moveTo(-innerW / 2, -radial / 2);
+  shape.lineTo(innerW / 2, -radial / 2);
+  shape.lineTo(outerW / 2, radial / 2);
+  shape.lineTo(-outerW / 2, radial / 2);
+  shape.closePath();
+  const top = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false }), laminateMat);
+  top.rotation.x = Math.PI / 2;
+  top.position.set(0, h, 0);
+  g.add(top);
+  // ніжки під кутами трапеції, трохи зсунуті всередину від країв
+  const corners: Array<[number, number]> = [
+    [-innerW / 2, -radial / 2],
+    [innerW / 2, -radial / 2],
+    [outerW / 2, radial / 2],
+    [-outerW / 2, radial / 2],
+  ];
+  const legH = h - thick;
+  for (const [cx, cz] of corners) {
+    g.add(cylinder(0.014, legH, metalLegMat, cx * 0.86, legH / 2, cz * 0.86, 10));
+  }
   return g;
 }
 

@@ -559,6 +559,249 @@ export function makeLegoBoxTexture(kind: 'nxt' | 'spike'): THREE.CanvasTexture {
   return toTexture(canvas);
 }
 
+/**
+ * Типографічний «ворд-клауд» для південної стіни (за референсом): графітові
+ * слова різного кеглю на прозорому тлі, кілька — вертикально. Розкладка
+ * задана вручну — детермінована, без рандому.
+ */
+export function makeWordCloudTexture(): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(1024, 632);
+  const ink = (alpha: number) => `rgba(43,52,64,${alpha})`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  type Word = { text: string; x: number; y: number; size: number; bold?: boolean; vertical?: boolean; alpha?: number };
+  const words: Word[] = [
+    // великі акценти
+    { text: 'ROBOTICS', x: 470, y: 330, size: 92, bold: true },
+    { text: 'INNOVATE', x: 545, y: 445, size: 64, bold: true },
+    { text: 'CREATE', x: 285, y: 232, size: 58, bold: true },
+    { text: 'PROGRAM', x: 700, y: 232, size: 48, bold: true },
+    { text: 'Future thinking', x: 330, y: 118, size: 46, alpha: 0.9 },
+    { text: 'IMAGINE', x: 858, y: 352, size: 38, bold: true },
+    { text: 'BIONIC', x: 148, y: 432, size: 42, bold: true },
+    // вертикальні (читаються знизу догори)
+    { text: 'MACHINE', x: 92, y: 262, size: 38, bold: true, vertical: true },
+    { text: 'COMPUTER', x: 800, y: 132, size: 30, bold: true, vertical: true },
+    { text: 'FUTURISTIC', x: 52, y: 468, size: 24, vertical: true, alpha: 0.75 },
+    { text: 'TECHNOLOGY', x: 972, y: 396, size: 22, vertical: true, alpha: 0.75 },
+    // дрібні слова-супутники
+    { text: 'THINK', x: 592, y: 118, size: 24, alpha: 0.8 },
+    { text: 'CONCEPT', x: 552, y: 168, size: 24, alpha: 0.8 },
+    { text: 'DESIGN', x: 706, y: 92, size: 20, alpha: 0.7 },
+    { text: 'IDEA', x: 902, y: 150, size: 30, alpha: 0.85 },
+    { text: 'MECHANIC', x: 928, y: 226, size: 24, alpha: 0.8 },
+    { text: 'DISCOVER', x: 795, y: 278, size: 26, alpha: 0.85 },
+    { text: 'CONNECT', x: 918, y: 300, size: 22, alpha: 0.75 },
+    { text: 'LEARN', x: 142, y: 348, size: 28, alpha: 0.85 },
+    { text: 'CYBER', x: 218, y: 512, size: 22, alpha: 0.75 },
+    { text: 'RESEARCH', x: 356, y: 512, size: 24, alpha: 0.8 },
+    { text: 'CYBORG', x: 492, y: 516, size: 22, alpha: 0.75 },
+    { text: 'COLLABORATE', x: 872, y: 452, size: 24, alpha: 0.8 },
+    { text: 'SHARE', x: 940, y: 496, size: 22, alpha: 0.75 },
+    { text: 'EXPLORE', x: 806, y: 528, size: 28, alpha: 0.85 },
+  ];
+  for (const w of words) {
+    ctx.fillStyle = ink(w.alpha ?? 0.95);
+    ctx.font = `${w.bold ? 'bold ' : ''}${w.size}px Arial`;
+    if (w.vertical) {
+      ctx.save();
+      ctx.translate(w.x, w.y);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText(w.text, 0, 0);
+      ctx.restore();
+    } else {
+      ctx.fillText(w.text, w.x, w.y);
+    }
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  return toTexture(canvas);
+}
+
+/**
+ * Поверхня стенда для матеріалів (біла дошка): заголовок, дві пришпилені
+ * пастельні картки праворуч (ліві 2/3 лишаються під фізичні міні-постери).
+ */
+export function makePinBoardTexture(): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(1024, 634);
+  ctx.fillStyle = '#fcfcfa';
+  ctx.fillRect(0, 0, 1024, 634);
+  // ледь помітне «полотно» дошки
+  for (let i = 0; i < 1400; i++) {
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(205,203,196,0.16)';
+    ctx.fillRect(Math.random() * 1024, Math.random() * 634, 1.4, 1.4);
+  }
+  // внутрішня тінь по периметру
+  ctx.strokeStyle = 'rgba(160,158,150,0.5)';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(5, 5, 1014, 624);
+  // заголовок стенда
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2a9d8f';
+  ctx.font = 'bold 36px Arial';
+  ctx.fillText('НАШІ ПРОЄКТИ • РОБОТОТЕХНІКА', 512, 58);
+  ctx.fillStyle = '#2a9d8f';
+  ctx.fillRect(342, 76, 340, 4);
+  // пришпилені картки праворуч (детермінований вигляд)
+  let seed = 17;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  const cards = [
+    { x: 690, y: 108, w: 262, h: 190, bg: '#dcebe6', pin: '#d94f4f' },
+    { x: 708, y: 336, w: 240, h: 206, bg: '#efe9da', pin: '#457b9d' },
+  ];
+  for (const card of cards) {
+    ctx.fillStyle = 'rgba(120,118,110,0.18)';
+    ctx.beginPath();
+    ctx.roundRect(card.x + 5, card.y + 7, card.w, card.h, 10);
+    ctx.fill();
+    ctx.fillStyle = card.bg;
+    ctx.beginPath();
+    ctx.roundRect(card.x, card.y, card.w, card.h, 10);
+    ctx.fill();
+    let ly = card.y + 34;
+    for (let line = 0; line < 5; line++) {
+      ctx.fillStyle = 'rgba(90,104,98,0.5)';
+      ctx.beginPath();
+      ctx.roundRect(card.x + 22, ly, 90 + rand() * (card.w - 130), 9, 4);
+      ctx.fill();
+      ly += 30;
+    }
+    // кнопка-пін
+    ctx.fillStyle = card.pin;
+    ctx.beginPath();
+    ctx.arc(card.x + card.w / 2, card.y + 8, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.arc(card.x + card.w / 2, card.y + 8, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // контурний робот на нижній картці
+  ctx.strokeStyle = '#7b6a4d';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(770, 430, 116, 62);
+  ctx.strokeRect(794, 500, 68, 32);
+  ctx.beginPath();
+  ctx.arc(802, 456, 9, 0, Math.PI * 2);
+  ctx.moveTo(863, 456);
+  ctx.arc(854, 456, 9, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.textAlign = 'left';
+  return toTexture(canvas);
+}
+
+/**
+ * Однолінійний робот для техно-декору західної стіни (за референсом
+ * line-art-космонавта): графітовий контур однією «безперервною» лінією —
+ * округла голова з антеною, тулуб, руки, колеса-ролики. Прозоре тло,
+ * детерміновано (без рандому).
+ */
+export function makeRobotLineArtTexture(): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(560, 532);
+  ctx.strokeStyle = '#2b3440';
+  ctx.lineWidth = 7;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  // антена з кулькою
+  ctx.beginPath();
+  ctx.arc(280, 28, 10, 0, Math.PI * 2);
+  ctx.moveTo(280, 38);
+  ctx.lineTo(280, 74);
+  ctx.stroke();
+  // голова — округлий прямокутник з «вухами»
+  ctx.beginPath();
+  ctx.roundRect(190, 74, 180, 120, 34);
+  ctx.stroke();
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.roundRect(280 + s * 104 - 10, 108, 20, 52, 8);
+    ctx.stroke();
+  }
+  // очі та усмішка (продовження «лінії»)
+  ctx.beginPath();
+  ctx.arc(243, 128, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(317, 128, 12, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(280, 152, 26, 0.25 * Math.PI, 0.75 * Math.PI);
+  ctx.stroke();
+  // шия та тулуб
+  ctx.beginPath();
+  ctx.moveTo(280, 194);
+  ctx.lineTo(280, 214);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(196, 214, 168, 150, 26);
+  ctx.stroke();
+  // панель на грудях: дві кнопки й «дисплей»
+  ctx.beginPath();
+  ctx.roundRect(232, 244, 96, 56, 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(258, 330, 9, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(302, 330, 9, 0, Math.PI * 2);
+  ctx.stroke();
+  // руки: ліва зігнута вгору (вітається), права вниз із клешнею
+  ctx.beginPath();
+  ctx.moveTo(196, 240);
+  ctx.quadraticCurveTo(140, 250, 122, 206);
+  ctx.quadraticCurveTo(112, 182, 126, 162);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(134, 148, 16, 0.2 * Math.PI, 1.6 * Math.PI);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(364, 240);
+  ctx.quadraticCurveTo(420, 258, 432, 310);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(438, 328, 16, 1.2 * Math.PI, 0.6 * Math.PI);
+  ctx.stroke();
+  // «спідниця»-шасі та колеса-ролики (їде по неону, як референс на роликах)
+  ctx.beginPath();
+  ctx.moveTo(214, 364);
+  ctx.lineTo(202, 420);
+  ctx.lineTo(358, 420);
+  ctx.lineTo(346, 364);
+  ctx.stroke();
+  for (const wx of [238, 322]) {
+    ctx.beginPath();
+    ctx.arc(wx, 458, 30, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(wx, 458, 8, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  return toTexture(canvas);
+}
+
+/**
+ * Безшовний горизонтальний градієнт неонової стрічки: рожевий → фіолетовий →
+ * бірюзовий → синій → знову рожевий (замкнений цикл — нескінченне
+ * «протікання» кольору через texture.offset.x). RepeatWrapping по U.
+ */
+export function makeNeonGradientTexture(): THREE.CanvasTexture {
+  const [canvas, ctx] = makeCanvas(256, 4);
+  const grad = ctx.createLinearGradient(0, 0, 256, 0);
+  grad.addColorStop(0, '#ff4fd8');
+  grad.addColorStop(0.28, '#a45cff');
+  grad.addColorStop(0.55, '#37d0ff');
+  grad.addColorStop(0.8, '#2a6df5');
+  grad.addColorStop(1, '#ff4fd8');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 256, 4);
+  const tex = toTexture(canvas);
+  tex.wrapS = THREE.RepeatWrapping;
+  return tex;
+}
+
 /** Циферблат настінного годинника. */
 export function makeClockTexture(): THREE.CanvasTexture {
   const [canvas, ctx] = makeCanvas(128, 128);

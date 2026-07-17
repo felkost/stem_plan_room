@@ -6,7 +6,6 @@ import { SCENE_TITLE } from '../domain/classroomLayout';
 import type { QualityLevel } from '../domain/entities';
 import { CapturePanel } from './CapturePanel';
 import { HelpOverlay } from './HelpOverlay';
-import { Loader } from './Loader';
 import { SceneCanvas } from './SceneCanvas';
 import { Toolbar } from './Toolbar';
 
@@ -18,15 +17,17 @@ interface Props {
   initialQuality: QualityLevel;
   /** Основний ввід — дотик: інша довідка та підказки. */
   isTouch: boolean;
+  /** Сцена готова — composition root ховає стартовий лоадер із index.html. */
+  onSceneReady?: () => void;
 }
 
-export function App({ renderer, viewer, media, initialQuality, isTouch }: Props) {
+export function App({ renderer, viewer, media, initialQuality, isTouch, onSceneReady }: Props) {
   const [activePreset, setActivePreset] = useState('overview');
-  const [autoRotate, setAutoRotateState] = useState(true);
+  // автообертання вимкнене за замовчуванням (синхронно з ThreeSceneRenderer)
+  const [autoRotate, setAutoRotateState] = useState(false);
   const [quality, setQualityState] = useState<QualityLevel>(initialQuality);
   const [helpOpen, setHelpOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [sceneLoading, setSceneLoading] = useState(true);
   const toastKey = useRef(0);
 
   const showToast = useCallback((message: string) => {
@@ -58,8 +59,7 @@ export function App({ renderer, viewer, media, initialQuality, isTouch }: Props)
 
   return (
     <div className="app">
-      <SceneCanvas renderer={renderer} onReady={() => setSceneLoading(false)} />
-      <Loader hidden={!sceneLoading} />
+      <SceneCanvas renderer={renderer} onReady={onSceneReady} />
       <div className="title-card ui-card">
         <h1>{SCENE_TITLE}</h1>
         <p>Інтерактивна 3D-модель кабінету за планом.</p>

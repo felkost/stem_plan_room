@@ -7,9 +7,11 @@
 
 ## Patterns
 <!-- Reusable approaches that worked in this module. -->
+- **2026-07-17 [Pattern]** — Стартовий лоадер — inline у index.html (розмітка + критичний CSS): видно одразу після парсингу HTML, до завантаження бандла; білий спалах прибирає `background:#0d1524` на html/body там само. Анімація — ЛИШЕ transform + will-change: компазитор крутить орбіту, навіть коли main thread заблоковано синхронною збіркою сцени. Важкий `renderer.mount()` відкладено подвійним rAF (на кадр після першого пейнта) + обов'язковий setTimeout-фолбек ~400 мс: у прихованій вкладці rAF заморожений, і без фолбека сцена не змонтувалася б ніколи. Ховає лоадер composition root (main.tsx) — DOM-API у presentation не тягнемо. `src/presentation/SceneCanvas.tsx:17`
 
 ## Mistakes
 <!-- Failure modes, antipatterns, wrong assumptions. Prioritize this section. -->
+- **2026-07-17 [Mistake]** — Перша версія лоадера (запис вище) викликала `onReady` одразу після синхронного `renderer.mount()` (за допомогою подвійного rAF-«вгадування»), а не після ФАКТИЧНОГО першого рендеру: `mount()` лише будує сцену синхронно, сам `render()` стається в наступному тіку циклу анімації (`setAnimationLoop`), тож на повільному CPU лоадер зникав РАНІШЕ, ніж з'являлася сцена (короткий білий/фоновий проміжок). Виправлено передачею `onFirstFrame`-колбека прямо в `ISceneRenderer.mount(container, onFirstFrame)` — рендерер сам викликає його одразу після ПЕРШОГО фактичного `render()` у `frame()` (прапорець `firstFrameRendered`, один раз). `src/presentation/SceneCanvas.tsx:27`, `src/infrastructure/three/ThreeSceneRenderer.ts` (метод `frame()`).
 
 ## Decisions
 <!-- Architectural or design choices with the reasoning behind them. -->
@@ -23,4 +25,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 3
+Last updated: 2026-07-17 · Entries: 5

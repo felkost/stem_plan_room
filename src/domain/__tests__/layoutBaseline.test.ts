@@ -35,10 +35,26 @@ describe('базове розташування об’єктів (еталон 
     }).toMatchSnapshot();
   });
 
-  it('групові столи в центрі кабінету (додано поза sh3d-планом)', () => {
+  it('острівці групових столів у центрі кабінету (додано поза sh3d-планом)', () => {
     expect({
-      groupTables: layout.GROUP_TABLES,
-      groupChairs: layout.GROUP_CHAIRS,
+      podDesks: layout.POD_DESKS,
+      podChairs: layout.POD_CHAIRS,
+    }).toMatchSnapshot();
+  });
+
+  it('настінні об’єкти редизайну (кондиціонер, стенд, декор, годинник)', () => {
+    expect({
+      airConditioner: layout.AIR_CONDITIONER,
+      pinBoard: layout.PIN_BOARD,
+      wallDecor: layout.WALL_DECOR,
+      wallClock: layout.WALL_CLOCK,
+    }).toMatchSnapshot();
+  });
+
+  it('декор західної стіни (робот + прогін неону)', () => {
+    expect({
+      robotLineDecal: layout.ROBOT_LINE_DECAL,
+      westNeonSpan: layout.WEST_NEON_SPAN,
     }).toMatchSnapshot();
   });
 

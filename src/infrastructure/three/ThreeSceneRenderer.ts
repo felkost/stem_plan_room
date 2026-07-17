@@ -9,9 +9,13 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import type { ISceneRenderer } from '../../application/ports';
 import type { CameraPreset, QualityLevel } from '../../domain/entities';
 import { CAMERA_PRESETS } from '../../domain/classroomLayout';
+import { framedFov } from './cameraFraming';
 import { assembleClassroom, type AssembledScene } from './sceneAssembler';
 
 const TWEEN_DURATION = 1.1; // с
+/** Базовий вертикальний FOV (для landscape/desktop); на вузьких екранах
+ *  ефективний FOV розширюється через framedFov() — див. cameraFraming.ts. */
+const BASE_FOV = 55;
 
 export class ThreeSceneRenderer implements ISceneRenderer {
   private renderer: THREE.WebGLRenderer | null = null;
@@ -24,6 +28,8 @@ export class ThreeSceneRenderer implements ISceneRenderer {
   private container: HTMLElement | null = null;
   private quality: QualityLevel = 'high';
   private userTakeoverListener: (() => void) | null = null;
+  private onFirstFrame: (() => void) | null = null;
+  private firstFrameRendered = false;
   private tween: {
     fromPos: THREE.Vector3;
     toPos: THREE.Vector3;
@@ -37,9 +43,11 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     this.quality = initialQuality;
   }
 
-  mount(container: HTMLElement): void {
+  mount(container: HTMLElement, onFirstFrame?: () => void): void {
     if (this.renderer) return; // уже змонтовано
     this.container = container;
+    this.onFirstFrame = onFirstFrame ?? null;
+    this.firstFrameRendered = false;
 
     const high = this.quality === 'high';
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -60,16 +68,21 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     scene.environmentIntensity = 0.3;
     this.scene = scene;
 
-    const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 100);
+    const aspect0 = container.clientWidth / container.clientHeight;
+    const camera = new THREE.PerspectiveCamera(framedFov(BASE_FOV, aspect0), aspect0, 0.1, 100);
     this.camera = camera;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.08;
+    // вищий dampingFactor — коротший «вибіг» після відпускання миші
+    // (менше значення = довша інерція); 0.2 дає плавність без «ковзання»
+    controls.dampingFactor = 0.2;
+    controls.rotateSpeed = 0.85;
     controls.maxPolarAngle = Math.PI / 2 + 0.35;
     controls.minDistance = 0.8;
     controls.maxDistance = 18;
-    controls.autoRotate = true;
+    // автообертання вимкнене за замовчуванням; вмикається кнопкою «Обертання»
+    controls.autoRotate = false;
     controls.autoRotateSpeed = 0.7;
     // Керування мишею: ЛКМ — обертання, коліщатко — масштаб (до курсора), ПКМ — зсув
     controls.enableRotate = true;
@@ -118,6 +131,7 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     const current = this.renderer.getSize(new THREE.Vector2());
     if (current.x === w && current.y === h) return;
     this.camera.aspect = w / h;
+    this.camera.fov = framedFov(BASE_FOV, this.camera.aspect);
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
   }
@@ -142,6 +156,11 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     for (const update of this.assembled.updatables) update(dt, t);
     this.updateWallVisibility();
     this.renderer.render(this.scene, this.camera);
+
+    if (!this.firstFrameRendered) {
+      this.firstFrameRendered = true;
+      this.onFirstFrame?.();
+    }
   }
 
   /** Dollhouse: ховаємо стіну/стелю, з боку якої стоїть камера. */
@@ -211,6 +230,8 @@ export class ThreeSceneRenderer implements ISceneRenderer {
   }
 
   dispose(): void {
+    this.onFirstFrame = null;
+    this.firstFrameRendered = false;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     if (this.renderer) {

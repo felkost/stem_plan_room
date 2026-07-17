@@ -19,6 +19,19 @@ const renderer = new ThreeSceneRenderer(initialQuality);
 const viewer = new ViewerService(renderer);
 const media = new MediaCaptureService(renderer, new MediaRecorderVideoService(), saveBlobToDevice);
 
+/**
+ * Стартовий лоадер живе в index.html (інлайн-CSS, видимий до завантаження
+ * бандла); ховаємо його з фейдом після побудови сцени. Страхувальний таймер —
+ * на випадок, коли transition не спрацює (reduced motion тощо).
+ */
+const hideBootLoader = () => {
+  const boot = document.getElementById('boot-loader');
+  if (!boot) return;
+  boot.classList.add('boot-loader--hidden');
+  boot.addEventListener('transitionend', () => boot.remove(), { once: true });
+  window.setTimeout(() => boot.remove(), 700);
+};
+
 if (import.meta.env.DEV) {
   // дебаг-хук для інструментів розробки
   (window as unknown as Record<string, unknown>).__app = { renderer, viewer, media };
@@ -31,5 +44,6 @@ createRoot(document.getElementById('root')!).render(
     media={media}
     initialQuality={initialQuality}
     isTouch={deviceProfile.coarsePointer}
+    onSceneReady={hideBootLoader}
   />,
 );
