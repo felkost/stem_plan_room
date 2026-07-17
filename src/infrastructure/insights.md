@@ -13,6 +13,7 @@
 
 ## Decisions
 <!-- Architectural or design choices with the reasoning behind them. -->
+- **2026-07-17 [Decision]** — OffscreenCanvas+Worker і WebGPU-бекенд відхилено (оцінка 2026 разом із міграцією React 19): капчер-пайплайн зав'язаний на DOM-canvas (`toDataURL` для скріншота, `captureStream(fps)` для MediaRecorder), OrbitControls слухає DOM-події канваса — перенесення рендерингу в Worker зламало б їх і прийом зйомки кадру з прихованої вкладки (див. Pattern вище). WebGL2 достатньо для однієї кімнати. Точка майбутньої заміни бекенда (WebGPU/static fallback) — порт `ISceneRenderer` (application/ports): заміна локалізується в infrastructure без дотику до application/presentation. `src/infrastructure/three/ThreeSceneRenderer.ts`
 
 ## Quirks
 - **2026-07-17 [Quirk]** — Прихована вкладка (`document.hidden === true`) заморожує rAF і колбеки ResizeObserver: цикл `setAnimationLoop` не рендерить, canvas лишається 0×0 або зі застарілим розміром, а скріншот вбудованої панелі браузера падає по таймауту. `captureFrame()` при цьому працює, бо викликає `renderer.render()` синхронно, без rAF. `src/infrastructure/three/ThreeSceneRenderer.ts:100`
@@ -21,4 +22,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 2
+Last updated: 2026-07-17 · Entries: 3
