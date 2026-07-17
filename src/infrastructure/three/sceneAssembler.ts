@@ -5,7 +5,6 @@
  */
 import * as THREE from 'three';
 import {
-  ARENA,
   CHALKBOARD,
   DISPLAY_CABINET,
   FRONT_CABINET,
@@ -19,7 +18,7 @@ import {
   TEACHER_CHAIR,
   TEACHER_DESK,
   TEACHER_MONITOR,
-  WORK_TABLE,
+  TRAINING_TABLE,
 } from '../../domain/classroomLayout';
 import { cm, enableShadows, placeItem } from './builders/common';
 import {
@@ -32,13 +31,12 @@ import {
   buildStudentDesk,
   buildSwitchRack,
   buildTeacherDesk,
-  buildWorkTable,
 } from './builders/furniture';
 import { buildLighting } from './builders/lighting';
 import { buildRoom, type RoomBuild } from './builders/room';
-import { buildArena } from './robots/arena';
 import { buildNxtRobot } from './robots/nxt';
 import { buildDisplayCabinet } from './robots/shelf';
+import { buildTrainingField } from './robots/trainingField';
 
 export interface AssembledScene {
   room: RoomBuild;
@@ -119,11 +117,12 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   enableShadows(frontChair);
   scene.add(frontChair);
 
-  // Червоний робочий стіл для збирання роботів (біля східної стіни)
-  const workTable = buildWorkTable();
-  placeItem(workTable, WORK_TABLE);
-  enableShadows(workTable);
-  scene.add(workTable);
+  // Тренувальний стіл із бортиками: робот NXT їде по лінії
+  const field = buildTrainingField();
+  placeItem(field.group, TRAINING_TABLE);
+  enableShadows(field.group);
+  scene.add(field.group);
+  updatables.push(field.update);
 
   // Техніка у ніші вчителя
   const rack = buildSwitchRack();
@@ -135,13 +134,6 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
   placeItem(powerStation, POWER_STATION);
   enableShadows(powerStation);
   scene.add(powerStation);
-
-  // Тренувальне поле з анімованим роботом (вільний центр класу)
-  const arena = buildArena();
-  arena.group.position.set(cm(ARENA.x), 0, cm(ARENA.y));
-  enableShadows(arena.group);
-  scene.add(arena.group);
-  updatables.push(arena.update);
 
   return { room, sun, updatables };
 }

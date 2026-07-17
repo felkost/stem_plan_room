@@ -7,7 +7,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   ALCOVE_WINDOWS,
-  ARENA,
   CAMERA_PRESETS,
   CEILING_LIGHTS,
   CHALKBOARD,
@@ -25,8 +24,8 @@ import {
   TEACHER_CHAIR,
   TEACHER_DESK,
   TEACHER_MONITOR,
+  TRAINING_TABLE,
   WEST_DOOR,
-  WORK_TABLE,
 } from '../classroomLayout';
 import type { PlacedItem, RectBounds } from '../entities';
 
@@ -95,7 +94,7 @@ const FLOOR_FURNITURE = [
   named('вітрина', DISPLAY_CABINET),
   named('тумба біля дошки', FRONT_CABINET),
   named('інтерактивна панель', INTERACTIVE_PANEL),
-  named('робочий стіл', WORK_TABLE),
+  named('тренувальний стіл', TRAINING_TABLE),
   named('зарядна станція', POWER_STATION),
   named('стійка комутатора', NETWORK_SWITCH),
 ];
@@ -134,16 +133,6 @@ describe('усі об’єкти в межах Г-подібної кімнат�
     }
   });
 
-  it('арена в межах основної зони', () => {
-    const half = ARENA.size / 2;
-    for (const [px, py] of [
-      [ARENA.x - half, ARENA.y - half], [ARENA.x + half, ARENA.y - half],
-      [ARENA.x - half, ARENA.y + half], [ARENA.x + half, ARENA.y + half],
-    ] as Array<[number, number]>) {
-      expect(inRect(px, py, ROOM, 0), `кут арени (${px}, ${py}) поза основною зоною`).toBe(true);
-    }
-  });
-
   it('стельові панелі в межах кімнати', () => {
     for (const l of CEILING_LIGHTS) {
       expect(insideRoom(l.x, l.y, -30), `панель (${l.x}, ${l.y}) занадто близько до стіни`).toBe(true);
@@ -175,14 +164,9 @@ describe('відсутність перетинів', () => {
     }
   });
 
-  it('арена не перетинається з меблями та кріслами', () => {
-    const half = ARENA.size / 2;
-    const arenaRect: PlacedItem = {
-      x: ARENA.x, y: ARENA.y, width: ARENA.size, depth: ARENA.size, height: 1,
-    };
-    expect(half).toBeGreaterThan(0);
-    for (const f of [...FLOOR_FURNITURE, ...ALL_CHAIRS]) {
-      expect(obbOverlap(arenaRect, f.value), `арена перетинається з: ${f.label}`).toBe(false);
+  it('тренувальний стіл не перетинається з кріслами', () => {
+    for (const c of ALL_CHAIRS) {
+      expect(obbOverlap(TRAINING_TABLE, c.value), `тренувальний стіл перетинається з: ${c.label}`).toBe(false);
     }
   });
 });

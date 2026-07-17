@@ -3,7 +3,7 @@
  * Жодних зовнішніх ассетів — усе малюється кодом.
  */
 import * as THREE from 'three';
-import { ARENA_TRACK, NXT_COLORS, SPIKE_COLORS } from '../../../domain/robotSpecs';
+import { FIELD_TRACK, NXT_COLORS, SPIKE_COLORS } from '../../../domain/robotSpecs';
 
 function makeCanvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const canvas = document.createElement('canvas');
@@ -350,39 +350,33 @@ export function makePosterTexture(kind: number): THREE.CanvasTexture {
   return toTexture(canvas);
 }
 
-/** Килимок арени 2×2 м із трасою (та сама траса, якою їде робот). */
-export function makeArenaMatTexture(): THREE.CanvasTexture {
+/**
+ * Поверхня тренувального стола: чисте біле поле з чорною замкненою лінією
+ * (як ізострічка на білому столі; та сама лінія, якою їде робот).
+ * TRACK_SCALE лишає вільний край між лінією та бортиками.
+ */
+export const FIELD_TRACK_SCALE = 0.8;
+
+export function makeFieldSurfaceTexture(): THREE.CanvasTexture {
   const S = 1024;
   const [canvas, ctx] = makeCanvas(S, S);
-  const px = (v: number) => ((v + 1) / 2) * S;
-  ctx.fillStyle = '#f4f1ea';
+  const px = (v: number) => ((v * FIELD_TRACK_SCALE + 1) / 2) * S;
+  ctx.fillStyle = '#f6f5f2';
   ctx.fillRect(0, 0, S, S);
-  // рамка
-  ctx.strokeStyle = '#20324c';
-  ctx.lineWidth = 26;
-  ctx.strokeRect(26, 26, S - 52, S - 52);
-  // сітка-розмітка
-  ctx.strokeStyle = 'rgba(32,50,76,0.12)';
-  ctx.lineWidth = 2;
-  for (let i = 1; i < 8; i++) {
-    ctx.beginPath();
-    ctx.moveTo((S / 8) * i, 40);
-    ctx.lineTo((S / 8) * i, S - 40);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(40, (S / 8) * i);
-    ctx.lineTo(S - 40, (S / 8) * i);
-    ctx.stroke();
+  // ледь помітна фактура ламінованої поверхні
+  for (let i = 0; i < 900; i++) {
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(190,188,182,0.12)';
+    ctx.fillRect(Math.random() * S, Math.random() * S, 1.5, 1.5);
   }
-  // замкнена траса — плавна крива через середини сегментів
-  const pts = ARENA_TRACK.map(([x, y]) => [px(x), px(y)] as [number, number]);
-  ctx.strokeStyle = '#141414';
-  ctx.lineWidth = 22;
+  // замкнена лінія — плавна крива через середини сегментів
+  const pts = FIELD_TRACK.map(([x, y]) => [px(x), px(y)] as [number, number]);
+  ctx.strokeStyle = '#17181a';
+  ctx.lineWidth = 24;
   ctx.lineJoin = 'round';
   ctx.beginPath();
   const n = pts.length;
   const mid = (a: [number, number], b: [number, number]): [number, number] => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-  let m = mid(pts[n - 1], pts[0]);
+  const m = mid(pts[n - 1], pts[0]);
   ctx.moveTo(m[0], m[1]);
   for (let i = 0; i < n; i++) {
     const next = pts[(i + 1) % n];
@@ -391,37 +385,18 @@ export function makeArenaMatTexture(): THREE.CanvasTexture {
   }
   ctx.closePath();
   ctx.stroke();
-  // зона старту
+  // зона старту — зелений квадрат на лінії
   ctx.fillStyle = '#2fa14e';
-  ctx.globalAlpha = 0.9;
-  ctx.fillRect(px(-0.62) - 44, px(-0.55) - 44, 88, 88);
+  ctx.globalAlpha = 0.85;
+  ctx.fillRect(px(-0.62) - 40, px(-0.55) - 40, 80, 80);
   ctx.globalAlpha = 1;
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 4;
-  ctx.strokeRect(px(-0.62) - 44, px(-0.55) - 44, 88, 88);
+  ctx.strokeRect(px(-0.62) - 40, px(-0.55) - 40, 80, 80);
   ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 30px Arial';
+  ctx.font = 'bold 26px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('START', px(-0.62), px(-0.55) + 10);
-  // кольорові зони-мішені
-  const zones: Array<[number, number, string]> = [
-    [0.25, -0.2, '#d92f2f'],
-    [-0.25, 0.22, '#2f6bd9'],
-    [0.2, 0.3, '#e8b90f'],
-  ];
-  zones.forEach(([x, y, color]) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(px(x), px(y), 46, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(px(x), px(y), 30, 0, Math.PI * 2);
-    ctx.stroke();
-  });
-  ctx.fillStyle = '#20324c';
-  ctx.font = 'bold 40px Arial';
-  ctx.fillText('STEM ⚙ АРЕНА', S / 2, S / 2 + 14);
+  ctx.fillText('START', px(-0.62), px(-0.55) + 9);
   ctx.textAlign = 'left';
   return toTexture(canvas);
 }

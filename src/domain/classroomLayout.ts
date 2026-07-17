@@ -8,7 +8,7 @@
  * (y = minY); двері — західна стіна; вікна — східні стіни; зона вчителя —
  * північно-східна ніша (alcove), відкрита в основну зону.
  */
-import type { ArenaSpec, CameraPreset, PlacedItem, RoomSpec, WallOpening } from './entities';
+import type { CameraPreset, PlacedItem, RoomSpec, WallOpening } from './entities';
 
 /**
  * Межі Г-подібної кімнати за стінами з плану (внутрішні грані, округлено):
@@ -121,8 +121,11 @@ export const FRONT_CHAIR: PlacedItem = {
   x: 355.81, y: -239.06494, angle: 6.275379, width: 36.59112, depth: 27.507225, height: 87.34,
 };
 
-/** Червоний робочий стіл для збирання роботів (біля східної стіни). */
-export const WORK_TABLE: PlacedItem = {
+/**
+ * Тренувальний стіл для роботів («Стол» із плану, мітка «Тренувальне поле
+ * для роботів»): біле поле з бортиками, на якому їздить робот NXT.
+ */
+export const TRAINING_TABLE: PlacedItem = {
   x: 498.77527, y: -103.90001, angle: 3.135993, width: 93.45411, depth: 93.61793, height: 72,
 };
 
@@ -149,9 +152,6 @@ export const ALCOVE_WINDOWS: WallOpening[] = [
 /** Двері — на західній стіні (x = minX); center — по осі Y. */
 export const WEST_DOOR: WallOpening = { center: -148.05002, width: 89.6, sill: 0, height: 212.1 };
 
-/** Тренувальне поле для роботів — вільний центр кімнати (мітка на плані). */
-export const ARENA: ArenaSpec = { x: 300, y: 40, size: 200 };
-
 /** Стельові LED-панелі 60×60: сітка 3×3 в основній зоні + 2 у ніші (центри, см). */
 export const CEILING_LIGHTS: Array<{ x: number; y: number }> = [
   { x: 65, y: -159 }, { x: 265, y: -159 }, { x: 465, y: -159 },
@@ -171,8 +171,8 @@ export const CAMERA_PRESETS: CameraPreset[] = [
   {
     id: 'arena',
     label: 'Тренувальне поле',
-    position: [3.0, 1.7, 2.9],
-    target: [3.0, 0.1, 0.4],
+    position: [4.99, 1.8, 0.6],
+    target: [4.99, 0.78, -1.04],
   },
   {
     id: 'board',

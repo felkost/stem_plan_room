@@ -53,15 +53,6 @@ export interface WallOpening {
   height: number;
 }
 
-/** Арена для робота. */
-export interface ArenaSpec {
-  /** Центр килимка, см */
-  x: number;
-  y: number;
-  /** Сторона квадратного килимка, см */
-  size: number;
-}
-
 /** Іменований ракурс камери (у метрах світу three.js). */
 export interface CameraPreset {
   id: string;

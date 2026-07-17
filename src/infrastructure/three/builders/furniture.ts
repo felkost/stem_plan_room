@@ -240,32 +240,6 @@ export function buildLowCabinet(w = 0.86, h = 0.74, d = 0.44): THREE.Group {
   return g;
 }
 
-/** Червоний робочий стіл для збирання роботів (квадратний, з плану). */
-export function buildWorkTable(): THREE.Group {
-  const g = new THREE.Group();
-  const w = 0.935;
-  const d = 0.936;
-  const h = 0.72;
-  const topMat = standardMat(0xd94a32, 0.55);
-  g.add(box(w, 0.04, d, topMat, 0, h - 0.02, 0));
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      g.add(box(0.05, h - 0.04, 0.05, metalLegMat, sx * (w / 2 - 0.05), (h - 0.04) / 2, sz * (d / 2 - 0.05)));
-    }
-  }
-  // царги
-  g.add(box(w - 0.14, 0.08, 0.02, metalLegMat, 0, h - 0.1, d / 2 - 0.05));
-  g.add(box(w - 0.14, 0.08, 0.02, metalLegMat, 0, h - 0.1, -d / 2 + 0.05));
-  // лоток із деталями LEGO
-  g.add(box(0.32, 0.07, 0.22, standardMat(0x3b6fb5, 0.6), -0.18, h + 0.035, -0.15));
-  const brickColors = [0xd92f2f, 0xf7d117, 0x2f9e44, 0x2f6bd9];
-  for (let i = 0; i < 8; i++) {
-    g.add(box(0.03, 0.018, 0.016, standardMat(brickColors[i % 4], 0.5),
-      -0.28 + (i % 4) * 0.065, h + 0.079, -0.2 + Math.floor(i / 4) * 0.09));
-  }
-  return g;
-}
-
 /** Стійка з мережевим комутатором і кабелями. */
 export function buildSwitchRack(): THREE.Group {
   const g = new THREE.Group();

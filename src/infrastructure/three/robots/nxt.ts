@@ -1,6 +1,8 @@
 /**
- * Робот LEGO Mindstorms NXT (tribot) — статична процедурна модель.
- * Фронт робота — локальний +z.
+ * Робот LEGO Mindstorms NXT (tribot) — процедурна модель у стилі реальних
+ * роботів кабінету: біло-сірий корпус, чорні кабелі до моторів і датчиків,
+ * ультразвуковий датчик-«очі» та датчик лінії, спрямований у поверхню.
+ * Фронт робота — локальний +z; колеса — у group.userData.wheels (для анімації).
  */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -61,17 +63,28 @@ export function buildNxtRobot(): THREE.Group {
   }
   brickTop.add(box(0.01, 0.004, 0.008, arrowMat, 0, 0.0265, -0.032));
 
-  // Колеса
+  // Колеса (шина + ковпак обертаються разом — для анімації руху)
+  const wheels: THREE.Group[] = [];
   for (const s of [-1, 1]) {
+    const wheel = new THREE.Group();
     const tire = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius, wheelRadius, 0.026, 22), tireMat);
     tire.geometry.rotateZ(Math.PI / 2);
-    tire.position.set(s * (width / 2 + 0.002), wheelRadius, 0.03);
-    g.add(tire);
+    wheel.add(tire);
     const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius * 0.5, wheelRadius * 0.5, 0.028, 16), wheelHubMat);
     hubCap.geometry.rotateZ(Math.PI / 2);
-    hubCap.position.copy(tire.position);
-    g.add(hubCap);
+    wheel.add(hubCap);
+    // «шпиці» маточини, щоб обертання було помітним
+    for (let i = 0; i < 3; i++) {
+      const spoke = box(0.03, wheelRadius * 1.3, 0.006, wheelHubMat, 0, 0, 0);
+      spoke.rotation.x = (i / 3) * Math.PI;
+      spoke.position.x = s * 0.0146;
+      wheel.add(spoke);
+    }
+    wheel.position.set(s * (width / 2 + 0.002), wheelRadius, 0.03);
+    g.add(wheel);
+    wheels.push(wheel);
   }
+  g.userData.wheels = wheels;
 
   // Заднє опорне колесо
   g.add(box(0.024, 0.03, 0.024, faceMat, 0, 0.035, -0.095));
@@ -91,6 +104,33 @@ export function buildNxtRobot(): THREE.Group {
     lens.geometry.rotateX(Math.PI / 2);
     g.add(lens);
   }
+
+  // Датчик лінії — дивиться у поверхню перед колесами
+  const lightSensor = box(0.024, 0.03, 0.024, sensorMat, 0.038, 0.028, 0.085);
+  g.add(lightSensor);
+  const lightLens = cylinder(0.008, 0.006, standardMat(0xc03a2b, 0.35), 0.038, 0.011, 0.085, 12);
+  g.add(lightLens);
+
+  // Чорні кабелі RJ12 від блока до моторів і датчиків (як у реальних роботів)
+  const cableMat = standardMat(0x232323, 0.75);
+  const addCable = (
+    from: [number, number, number],
+    mid: [number, number, number],
+    to: [number, number, number],
+  ) => {
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(...from),
+      new THREE.Vector3(...mid),
+      new THREE.Vector3(...to),
+    );
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 14, 0.0035, 6), cableMat));
+  };
+  // до моторів (петлі з боків блока)
+  addCable([-0.03, 0.1, -0.05], [-0.075, 0.085, -0.03], [-0.055, 0.05, 0.0]);
+  addCable([0.03, 0.1, -0.05], [0.075, 0.085, -0.03], [0.055, 0.05, 0.0]);
+  // до ультразвукового датчика та датчика лінії
+  addCable([0.012, 0.115, 0.04], [0.03, 0.1, 0.09], [0.008, 0.06, 0.098]);
+  addCable([-0.012, 0.115, 0.04], [-0.02, 0.09, 0.1], [0.034, 0.045, 0.085]);
 
   return g;
 }

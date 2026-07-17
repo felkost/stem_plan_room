@@ -35,12 +35,11 @@ describe('базове розташування об’єктів (еталон 
     }).toMatchSnapshot();
   });
 
-  it('техніка, арена, отвори, світло, камери', () => {
+  it('техніка, тренувальний стіл, отвори, світло, камери', () => {
     expect({
-      workTable: layout.WORK_TABLE,
+      trainingTable: layout.TRAINING_TABLE,
       networkSwitch: layout.NETWORK_SWITCH,
       powerStation: layout.POWER_STATION,
-      arena: layout.ARENA,
       eastWindows: layout.EAST_WINDOWS,
       alcoveWindows: layout.ALCOVE_WINDOWS,
       westDoor: layout.WEST_DOOR,
