@@ -6,8 +6,13 @@ import type { CameraPreset, QualityLevel } from '../domain/entities';
 
 /** Порт 3D-рендерера сцени. */
 export interface ISceneRenderer {
-  /** Змонтувати canvas у контейнер і запустити цикл рендерингу. */
-  mount(container: HTMLElement): void;
+  /**
+   * Змонтувати canvas у контейнер і запустити цикл рендерингу.
+   * onFirstFrame — викликається після ПЕРШОГО фактичного render() (не
+   * одразу після побудови сцени), щоб UI ховав лоадер лише коли кадр
+   * справді намальовано, а не з фіксованою затримкою «навмання».
+   */
+  mount(container: HTMLElement, onFirstFrame?: () => void): void;
   dispose(): void;
   applyPreset(preset: CameraPreset): void;
   setAutoRotate(on: boolean): void;

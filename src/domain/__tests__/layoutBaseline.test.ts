@@ -35,10 +35,10 @@ describe('базове розташування об’єктів (еталон 
     }).toMatchSnapshot();
   });
 
-  it('групові столи в центрі кабінету (додано поза sh3d-планом)', () => {
+  it('острівці групових столів у центрі кабінету (додано поза sh3d-планом)', () => {
     expect({
-      groupTables: layout.GROUP_TABLES,
-      groupChairs: layout.GROUP_CHAIRS,
+      podDesks: layout.POD_DESKS,
+      podChairs: layout.POD_CHAIRS,
     }).toMatchSnapshot();
   });
 

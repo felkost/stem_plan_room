@@ -38,13 +38,51 @@
   на вузьких aspect (кламп 78°) — без переміщення камери в просторі.
   Перша спроба (відкат дистанції від цілі) виштовхувала камеру крізь стіну
   на тісних пресетах — відхилено, деталі в infrastructure/insights.md
-  (Decision). CAMERA_PRESETS (позиції/цілі) не чіпались.
+  (Decision). CAMERA_PRESETS (позиції/цілі) не чіпались тоді.
+- **Далі виправлено 3 речі за фідбеком користувача:**
+  1) Лоадер тепер ховається лише після ФАКТИЧНОГО першого рендеру кадру:
+     `ISceneRenderer.mount(container, onFirstFrame)` — рендерер сам викликає
+     колбек у `frame()` одразу після `render()` (прапорець `firstFrameRendered`),
+     а не одразу після синхронного `mount()` як раніше (то й був баг «лоадер
+     зникає, білий проміжок, потім сцена»). `Loader.tsx`-компонент видалено ще
+     на попередньому кроці, залишився лише inline-лоадер в index.html.
+  2) Центр обертання camera: `CAMERA_PRESETS[0]` (overview) тепер `target` =
+     ГЕОМЕТРИЧНИЙ ЦЕНТР кімнати `(2.65, 1.1, 1.13)` замість точки біля стіни —
+     OrbitControls обертає навколо target, тож кімната більше не «вилітає» за
+     екран. Дистанція від центру (2.4 м) свідомо менша за половину найвужчого
+     виміру кімнати (3.0 м по x) — 360°-обертання ніколи не проходить крізь
+     стіни. `position [1.45,1.75,-0.95]`, `target [2.65,1.1,1.13]`.
+  3) Групові столи в центрі замінено на 2 «острівці» по 6 клиноподібних
+     («пелюстка») столів навколо спільного центру + 6 бежевих крісел кожен
+     (12+12, форма/кольори — за референсом користувача, НЕ з'єднані фізично —
+     динамічні групи). Нові доменні константи `POD_DESKS`/`POD_CHAIRS`
+     (`classroomLayout.ts`, генератор `podIsland()`), білдер `buildPodDesk()`
+     (трапецієподібна стільниця через `THREE.ExtrudeGeometry`), крісла —
+     `buildOfficeChair(0xd8c6a1)` (тепле бежеве, гармонує зі світлим дубом).
+     Симетрія відносно осі x=265 (середина кімнати); відступи до дошки/
+     вчительської зони і до бічних/південного рядів учнівських крісел
+     перевірені тестами (>30 см запасу). Старі `GROUP_TABLES`/`GROUP_CHAIRS`
+     і `buildGroupTable()` видалено повністю (dead code).
+- Тести: 135 passed; `npm run verify` і `npm run build` чисті; всі 3 фікси
+  перевірено скріншотами (топ-даун острівців, close-up стола, обертання
+  синтетичними PointerEvent на канвасі — camera лишається в кадрі).
 - Можливі наступні кроки: продовження правок дизайну в цьому ж PR;
   `webglcontextlost`-відновлення; адаптивна якість; Vite 6→7; перевірка на
   реальному iPhone (`npm run dev -- --host`).
 
 ## Журнал етапів
 
+- **2026-07-17 — Лоадер до реального кадру, центр обертання, острівці столів
+  (гілка feat/modified_design)** Три незалежні фікси за фідбеком:
+  (1) `onFirstFrame`-колбек у `ISceneRenderer.mount()` — лоадер ховається
+  лише після справжнього `render()`, не одразу після синхронного `mount()`;
+  (2) `CAMERA_PRESETS[0].target` → геометричний центр кімнати, дистанція
+  2.4м < половини найвужчого виміру (3.0м) — 360°-обертання без проходу
+  крізь стіни (Mistake-запис у infrastructure/insights.md); (3) `GROUP_TABLES`
+  → `POD_DESKS`/`POD_CHAIRS` — 2 острівці по 6 клиноподібних столів
+  (`buildPodDesk`, ExtrudeGeometry-трапеція) + бежеві крісла навколо
+  спільного центру, симетрично на осі x=265, з перевіреними тестами
+  відступами до дошки/бічних рядів. 135 тестів (+8 нових), build чистий.
 - **2026-07-17 — Мобільна поправка кадрування: розширення FOV на портретних
   екранах (гілка feat/modified_design)** Новий `cameraFraming.ts::framedFov`
   (baseFov=55°, REFERENCE_ASPECT=16/9, MAX_FOV=78°): на aspect < 16/9
@@ -121,12 +159,14 @@
   `entities.ts` — типи; `robotSpecs.ts` — кольори/треки роботів.
 - `src/domain/__tests__/` — layoutValidation (межі/колізії/SAT),
   layoutBaseline (snapshot-еталон плану).
-- `src/infrastructure/three/builders/` — room (стіни/вікна/жалюзі/постери),
-  furniture (меблі, `sideLoopLeg` — чорна О-рама), textures (усі
+- `src/infrastructure/three/builders/` — room (стіни/вікна/жалюзі/постери/
+  кондиціонер/стенд/декор/годинник), furniture (меблі, `sideLoopLeg` — чорна
+  О-рама, `buildPodDesk` — трапецієподібний стіл острівця), textures (усі
   canvas-текстури), lighting, common (`cm()`, `placeItem`, `box`).
 - `src/infrastructure/three/sceneAssembler.ts` — розстановка всього за даними
   домену; `ThreeSceneRenderer.ts` — рендерер/OrbitControls/dollhouse/якість/
-  captureFrame; `robots/` — NXT, SPIKE, поле, вітрина.
+  captureFrame/onFirstFrame; `cameraFraming.ts` — `framedFov` (адаптивний FOV
+  для вузьких екранів); `robots/` — NXT, SPIKE, поле, вітрина.
 - `src/infrastructure/media/` — recorderFormats (чистий вибір WebM/MP4),
   MediaRecorderVideoService, download (Web Share → `<a download>`).
 - `src/infrastructure/device/deviceProfile.ts` — детекція + чисті правила
@@ -153,4 +193,4 @@
   shrink-допуски SAT і політика еталона — `src/domain/CLAUDE.md`.
 
 ---
-Останнє оновлення: 2026-07-17 (редизайн стін, feat/modified_design)
+Останнє оновлення: 2026-07-17 (лоадер/обертання/острівці столів, feat/modified_design)

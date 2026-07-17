@@ -12,6 +12,7 @@
 
 ## Mistakes
 <!-- Failure modes, antipatterns, wrong assumptions. Prioritize this section. -->
+- **2026-07-17 [Mistake]** — `CAMERA_PRESETS[0]` (overview) мав `target` біля стіни (тюнили framing на конкретну композицію), а не в геометричному центрі кімнати. OrbitControls обертає камеру НАВКОЛО `target`, тож при вільному обертанні мишею кімната (велика маса геометрії, віддалена від pivot) «вилітала» за межі екрана — користувач бачив, що обертання відбувається не в центрі кадру. Фікс: `target` = геометричний центр `ROOM` (рівновіддалений від усіх стін), а СТАРТОВА дистанція від нього — свідомо МЕНША за половину найвужчого виміру кімнати (тут: 2.4 м < 3.0 м половини ширини по x), щоб при 360°-обертанні на тій самій дистанції (drag не змінює radius, лише кут) камера ніколи не проходила крізь стіни на жодному азимуті. Перевірено синтетичними `PointerEvent`(pointerdown/move/up) на канвасі — OrbitControls реагує на них так само, як на реальну мишу. `src/domain/classroomLayout.ts` (CAMERA_PRESETS, overview).
 
 ## Decisions
 <!-- Architectural or design choices with the reasoning behind them. -->
@@ -26,4 +27,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 6
+Last updated: 2026-07-17 · Entries: 7

@@ -28,6 +28,8 @@ export class ThreeSceneRenderer implements ISceneRenderer {
   private container: HTMLElement | null = null;
   private quality: QualityLevel = 'high';
   private userTakeoverListener: (() => void) | null = null;
+  private onFirstFrame: (() => void) | null = null;
+  private firstFrameRendered = false;
   private tween: {
     fromPos: THREE.Vector3;
     toPos: THREE.Vector3;
@@ -41,9 +43,11 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     this.quality = initialQuality;
   }
 
-  mount(container: HTMLElement): void {
+  mount(container: HTMLElement, onFirstFrame?: () => void): void {
     if (this.renderer) return; // уже змонтовано
     this.container = container;
+    this.onFirstFrame = onFirstFrame ?? null;
+    this.firstFrameRendered = false;
 
     const high = this.quality === 'high';
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -152,6 +156,11 @@ export class ThreeSceneRenderer implements ISceneRenderer {
     for (const update of this.assembled.updatables) update(dt, t);
     this.updateWallVisibility();
     this.renderer.render(this.scene, this.camera);
+
+    if (!this.firstFrameRendered) {
+      this.firstFrameRendered = true;
+      this.onFirstFrame?.();
+    }
   }
 
   /** Dollhouse: ховаємо стіну/стелю, з боку якої стоїть камера. */
@@ -221,6 +230,8 @@ export class ThreeSceneRenderer implements ISceneRenderer {
   }
 
   dispose(): void {
+    this.onFirstFrame = null;
+    this.firstFrameRendered = false;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     if (this.renderer) {

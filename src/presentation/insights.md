@@ -11,6 +11,7 @@
 
 ## Mistakes
 <!-- Failure modes, antipatterns, wrong assumptions. Prioritize this section. -->
+- **2026-07-17 [Mistake]** — Перша версія лоадера (запис вище) викликала `onReady` одразу після синхронного `renderer.mount()` (за допомогою подвійного rAF-«вгадування»), а не після ФАКТИЧНОГО першого рендеру: `mount()` лише будує сцену синхронно, сам `render()` стається в наступному тіку циклу анімації (`setAnimationLoop`), тож на повільному CPU лоадер зникав РАНІШЕ, ніж з'являлася сцена (короткий білий/фоновий проміжок). Виправлено передачею `onFirstFrame`-колбека прямо в `ISceneRenderer.mount(container, onFirstFrame)` — рендерер сам викликає його одразу після ПЕРШОГО фактичного `render()` у `frame()` (прапорець `firstFrameRendered`, один раз). `src/presentation/SceneCanvas.tsx:27`, `src/infrastructure/three/ThreeSceneRenderer.ts` (метод `frame()`).
 
 ## Decisions
 <!-- Architectural or design choices with the reasoning behind them. -->
@@ -24,4 +25,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 4
+Last updated: 2026-07-17 · Entries: 5

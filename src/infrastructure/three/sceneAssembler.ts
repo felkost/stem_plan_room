@@ -9,11 +9,11 @@ import {
   DISPLAY_CABINET,
   FRONT_CABINET,
   FRONT_CHAIR,
-  GROUP_CHAIRS,
-  GROUP_TABLES,
   INTERACTIVE_PANEL,
   MONITORS,
   NETWORK_SWITCH,
+  POD_CHAIRS,
+  POD_DESKS,
   POWER_STATION,
   STUDENT_CHAIRS,
   STUDENT_DESKS,
@@ -25,16 +25,20 @@ import {
 import { cm, enableShadows, placeItem } from './builders/common';
 import {
   buildChalkboard,
-  buildGroupTable,
   buildInteractivePanel,
   buildLowCabinet,
   buildMonitor,
   buildOfficeChair,
+  buildPodDesk,
   buildPowerStation,
   buildStudentDesk,
   buildSwitchRack,
   buildTeacherDesk,
 } from './builders/furniture';
+
+/** Тепле бежеве крісло острівців — за формою офісне (як усюди), гармонує
+ *  зі світлим дубом стільниць (за референсом користувача). */
+const POD_CHAIR_COLOR = 0xd8c6a1;
 import { buildLighting } from './builders/lighting';
 import { buildRoom, type RoomBuild } from './builders/room';
 import { buildNxtRobot } from './robots/nxt';
@@ -74,15 +78,15 @@ export function assembleClassroom(scene: THREE.Scene): AssembledScene {
     scene.add(chair);
   }
 
-  // Групові столи в центрі кабінету зі стільцями (нові об'єкти поза планом)
-  for (const tableSpec of GROUP_TABLES) {
-    const table = buildGroupTable();
-    placeItem(table, tableSpec);
-    enableShadows(table);
-    scene.add(table);
+  // Острівці групових столів у центрі кабінету (нові об'єкти поза планом)
+  for (const deskSpec of POD_DESKS) {
+    const desk = buildPodDesk();
+    placeItem(desk, deskSpec);
+    enableShadows(desk);
+    scene.add(desk);
   }
-  for (const chairSpec of GROUP_CHAIRS) {
-    const chair = buildOfficeChair(0xb3b3b0);
+  for (const chairSpec of POD_CHAIRS) {
+    const chair = buildOfficeChair(POD_CHAIR_COLOR);
     placeItem(chair, chairSpec);
     enableShadows(chair);
     scene.add(chair);

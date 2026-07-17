@@ -3,7 +3,7 @@ import type { ISceneRenderer } from '../application/ports';
 
 interface Props {
   renderer: ISceneRenderer;
-  /** Викликається після побудови сцени (mount відкладено на кадр після першого пейнта). */
+  /** Викликається після ПЕРШОГО фактичного рендеру кадру сцени. */
   onReady?: () => void;
 }
 
@@ -18,13 +18,16 @@ export function SceneCanvas({ renderer, onReady }: Props) {
     // першого пейнта: стартовий лоадер встигає з'явитись, а його
     // transform-анімація вже йде на компазиторі й не завмирає, поки
     // main thread будує сцену. Таймер-фолбек — для прихованої вкладки,
-    // де rAF заморожений (сцена має змонтуватися й там).
+    // де rAF заморожений (mount() має відбутися й там). onReady викликає
+    // САМ РЕНДЕРЕР після першого фактичного render() (не одразу після
+    // mount()) — mount() лише синхронно будує сцену, а перший кадр
+    // малюється на наступному тіку циклу анімації; без цього лоадер
+    // ховався б раніше, ніж щось з'являлось на екрані.
     let started = false;
     const start = () => {
       if (started) return;
       started = true;
-      renderer.mount(el);
-      onReady?.();
+      renderer.mount(el, onReady);
     };
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
