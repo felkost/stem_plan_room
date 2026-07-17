@@ -14,6 +14,11 @@
   (у типах 19 немає глобального `React`-неймспейсу). React Compiler,
   OffscreenCanvas/Worker і WebGPU **свідомо відхилено** — обґрунтування в
   insights.md (presentation/infrastructure, Decision-записи від 2026-07-17).
+- Той самий PR доповнено UI-полірою: новий `src/presentation/Loader.tsx`
+  (орбітальний лоадер S/T/E/M, показується під час синхронного
+  `renderer.mount()`, ховається через `onReady`-колбек із SceneCanvas);
+  прибрано речення-акцент із title-card; футер «@Feliks Kostukevych + рік»
+  у панелі довідки; посилання на живий деплой у README.
 - Тести: 113 passed. `tsc --noEmit`, `npm run build` (vite 6.4.3) і браузерна
   перевірка сцени (WebGL2, канали React→рендерер) — чисті.
 - **Увага:** у робочому дереві були передіснуючі (не мої) зміни `README.md` та
@@ -24,6 +29,14 @@
 
 ## Журнал етапів
 
+- **2026-07-17 — UI-поліра: лоадер сцени, довідка, README (гілка feat/migration)**
+  `51c5cf0`. `Loader.tsx` — 4 кола S/T/E/M по орбіті (контр-обертання тримає
+  літери прямими), fade через клас `.loader--hidden`; `SceneCanvas` отримав
+  `onReady`. Прибрано речення-акцент із заголовка; футер довідки; посилання
+  на `https://stem-plan-room.onrender.com/` у README. Quirk: у прихованій
+  вкладці панелі превʼю CSS-transition теж заморожується (як і rAF) —
+  перевіряти через `classList`/`getBoundingClientRect`, не `getComputedStyle`
+  анімованої властивості (infrastructure/insights.md).
 - **2026-07-17 — Міграція React 18 → 19 (гілка feat/migration)**
   Оцінено 4 кандидати з дослідження 2026: мігровано лише React (18.3→19.2,
   типи 19.x, plugin-react 5.x); React Compiler / OffscreenCanvas+Worker / WebGPU
