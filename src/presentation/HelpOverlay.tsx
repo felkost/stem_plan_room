@@ -41,6 +41,7 @@ export function HelpOverlay({ open, onToggle, isTouch }: Props) {
               <li>«Скріншот» і «Запис відео» зберігають файли на ваш пристрій.</li>
             )}
           </ul>
+          <p className="help-footer">@Feliks Kostukevych · {new Date().getFullYear()}</p>
         </div>
       )}
     </>

@@ -18,9 +18,10 @@
 
 ## Quirks
 - **2026-07-17 [Quirk]** — Прихована вкладка (`document.hidden === true`) заморожує rAF і колбеки ResizeObserver: цикл `setAnimationLoop` не рендерить, canvas лишається 0×0 або зі застарілим розміром, а скріншот вбудованої панелі браузера падає по таймауту. `captureFrame()` при цьому працює, бо викликає `renderer.render()` синхронно, без rAF. `src/infrastructure/three/ThreeSceneRenderer.ts:100`
+  - **Дод. 2026-07-17:** та сама заморозка стосується й CSS-transition (не лише rAF/ResizeObserver): клас `.loader--hidden` (opacity/visibility-fade у `presentation/Loader.tsx`) коректно застосовується React-стейтом (`pointerEvents` одразу `none`), але `getComputedStyle(...).opacity` лишається `1` і не доходить до `0`, поки вкладка прихована — це не баг компонента. Перевіряти fade-переходи так само, як WebGL-кадр: через `classList`/geometry (`getBoundingClientRect`), а не через `getComputedStyle` анімованої властивості чи скріншот.
 
 ## Open Questions
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 4
+Last updated: 2026-07-17 · Entries: 5

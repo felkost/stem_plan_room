@@ -110,6 +110,8 @@ npm start          # роздати зібрану версію → http://local
 
 ## Розгортання на Render.com (результат в інтернеті)
 
+**🔗 Живий сайт:** <https://stem-plan-room.onrender.com/>
+
 Цей проєкт — фронтенд-only Vite/React SPA, тому його найкраще розгортати як
 **Static Site** на Render, а не як Web Service.
 

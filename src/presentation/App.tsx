@@ -6,6 +6,7 @@ import { SCENE_TITLE } from '../domain/classroomLayout';
 import type { QualityLevel } from '../domain/entities';
 import { CapturePanel } from './CapturePanel';
 import { HelpOverlay } from './HelpOverlay';
+import { Loader } from './Loader';
 import { SceneCanvas } from './SceneCanvas';
 import { Toolbar } from './Toolbar';
 
@@ -25,6 +26,7 @@ export function App({ renderer, viewer, media, initialQuality, isTouch }: Props)
   const [quality, setQualityState] = useState<QualityLevel>(initialQuality);
   const [helpOpen, setHelpOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [sceneLoading, setSceneLoading] = useState(true);
   const toastKey = useRef(0);
 
   const showToast = useCallback((message: string) => {
@@ -56,13 +58,11 @@ export function App({ renderer, viewer, media, initialQuality, isTouch }: Props)
 
   return (
     <div className="app">
-      <SceneCanvas renderer={renderer} />
+      <SceneCanvas renderer={renderer} onReady={() => setSceneLoading(false)} />
+      <Loader hidden={!sceneLoading} />
       <div className="title-card ui-card">
         <h1>{SCENE_TITLE}</h1>
-        <p>
-          Інтерактивна 3D-модель кабінету за планом. Акцент — робототехніка:
-          LEGO Mindstorms NXT та SPIKE Prime.
-        </p>
+        <p>Інтерактивна 3D-модель кабінету за планом.</p>
       </div>
       <HelpOverlay open={helpOpen} onToggle={() => setHelpOpen((v) => !v)} isTouch={isTouch} />
       <Toolbar
