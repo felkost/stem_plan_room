@@ -7,6 +7,7 @@
 
 ## Patterns
 <!-- Reusable approaches that worked in this module. -->
+- **2026-07-17 [Pattern]** — Стартовий лоадер — inline у index.html (розмітка + критичний CSS): видно одразу після парсингу HTML, до завантаження бандла; білий спалах прибирає `background:#0d1524` на html/body там само. Анімація — ЛИШЕ transform + will-change: компазитор крутить орбіту, навіть коли main thread заблоковано синхронною збіркою сцени. Важкий `renderer.mount()` відкладено подвійним rAF (на кадр після першого пейнта) + обов'язковий setTimeout-фолбек ~400 мс: у прихованій вкладці rAF заморожений, і без фолбека сцена не змонтувалася б ніколи. Ховає лоадер composition root (main.tsx) — DOM-API у presentation не тягнемо. `src/presentation/SceneCanvas.tsx:17`
 
 ## Mistakes
 <!-- Failure modes, antipatterns, wrong assumptions. Prioritize this section. -->
@@ -23,4 +24,4 @@
 <!-- Unresolved. Convert to an entry in the appropriate section when answered. -->
 
 ---
-Last updated: 2026-07-17 · Entries: 3
+Last updated: 2026-07-17 · Entries: 4
